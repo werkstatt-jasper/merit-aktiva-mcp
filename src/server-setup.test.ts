@@ -23,19 +23,43 @@ vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 describe("buildAllTools", () => {
-  it("merges all read tools with merit_ prefixes", () => {
+  it("merges all tools with merit_ prefixes", () => {
     const client = {} as MeritClient;
     const tools = buildAllTools(client);
-    expect(tools.merit_list_customers).toBeDefined();
-    expect(tools.merit_list_vendors).toBeDefined();
-    expect(tools.merit_list_sales_invoices).toBeDefined();
-    expect(tools.merit_list_sales_invoices_by_number_or_customer).toBeDefined();
-    expect(tools.merit_get_sales_invoice).toBeDefined();
-    expect(tools.merit_list_accounts).toBeDefined();
-    expect(tools.merit_list_payments).toBeDefined();
-    expect(tools.merit_list_payment_types).toBeDefined();
-    expect(tools.merit_list_taxes).toBeDefined();
-    expect(Object.keys(tools)).toHaveLength(9);
+    const expected = [
+      "merit_list_customers",
+      "merit_list_vendors",
+      "merit_list_sales_invoices",
+      "merit_list_sales_invoices_by_number_or_customer",
+      "merit_get_sales_invoice",
+      "merit_list_accounts",
+      "merit_list_payments",
+      "merit_list_payment_types",
+      "merit_list_taxes",
+      "merit_list_purchase_invoices",
+      "merit_get_purchase_invoice",
+      "merit_list_purchase_orders",
+      "merit_list_gl_batches",
+      "merit_get_gl_batch",
+      "merit_list_gl_batches_full",
+      "merit_list_items",
+      "merit_list_item_groups",
+      "merit_list_projects",
+      "merit_list_cost_centers",
+      "merit_list_dimensions",
+      "merit_list_departments",
+      "merit_list_units",
+      "merit_list_banks",
+      "merit_list_financial_years",
+      "merit_get_customer_debts_report",
+      "merit_get_customer_payments_report",
+      "merit_get_profit_report",
+      "merit_get_balance_report",
+      "merit_get_inventory_report",
+      "merit_get_sales_report",
+      "merit_get_purchase_report",
+    ];
+    expect(Object.keys(tools).sort()).toEqual([...expected].sort());
     for (const [name, tool] of Object.entries(tools)) {
       expect(name).toMatch(/^merit_/);
       expect(tool.description.length).toBeGreaterThan(20);

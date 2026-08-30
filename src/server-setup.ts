@@ -6,7 +6,12 @@ import type { MeritClient } from "./client.js";
 import { logger } from "./logger.js";
 import { createAccountTools } from "./tools/accounts.js";
 import { createCustomerTools } from "./tools/customers.js";
+import { createGlTransactionTools } from "./tools/gl-transactions.js";
+import { createItemTools } from "./tools/items.js";
 import { createPaymentTools } from "./tools/payments.js";
+import { createPurchaseInvoiceTools } from "./tools/purchase-invoices.js";
+import { createReferenceDataTools } from "./tools/reference-data.js";
+import { createReportTools } from "./tools/reports.js";
 import { createSalesInvoiceTools } from "./tools/sales-invoices.js";
 import { createTaxTools } from "./tools/taxes.js";
 import { createVendorTools } from "./tools/vendors.js";
@@ -25,7 +30,7 @@ export type ToolRecord = Record<
   }
 >;
 
-/** Registers all Merit Aktiva MCP tools (read-only MVP). */
+/** Registers all Merit Aktiva MCP tools. */
 export function buildAllTools(client: MeritClient): ToolRecord {
   return {
     ...createCustomerTools(client),
@@ -34,6 +39,11 @@ export function buildAllTools(client: MeritClient): ToolRecord {
     ...createAccountTools(client),
     ...createPaymentTools(client),
     ...createTaxTools(client),
+    ...createPurchaseInvoiceTools(client),
+    ...createGlTransactionTools(client),
+    ...createItemTools(client),
+    ...createReferenceDataTools(client),
+    ...createReportTools(client),
   };
 }
 

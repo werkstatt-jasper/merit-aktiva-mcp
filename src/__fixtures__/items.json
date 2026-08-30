@@ -1,0 +1,12 @@
+{
+  "list": [
+    {
+      "ItemId": "dddddddd-eeee-4fff-8000-111111111111",
+      "Code": "TEENUS",
+      "Name": "Konsultatsiooniteenus",
+      "Type": 2,
+      "Usage": 3
+    }
+  ],
+  "groups": [{ "Id": "eeeeeeee-ffff-4000-8111-222222222222", "Code": "SRV", "Name": "Services" }]
+}

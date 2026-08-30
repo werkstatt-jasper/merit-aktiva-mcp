@@ -4,14 +4,21 @@ import {
   formatZodError,
   guidString,
   isoToMeritDate,
+  isoToMeritDateTime,
   optionalBoolean,
   optionalDateType,
   optionalGuid,
   optionalInt,
   optionalMeritDate,
+  optionalMeritDateTime,
+  optionalNumber,
+  optionalPurchaseOrderDateFilter,
   optionalString,
   parseToolArgs,
+  requiredInt,
   requiredMeritDate,
+  requiredMeritDateTime,
+  requiredNumber,
   ymdDateString,
 } from "./tool-args.js";
 
@@ -92,6 +99,51 @@ describe("optional primitives", () => {
     expect(optionalDateType.parse(1)).toBe(1);
     expect(optionalDateType.parse(null)).toBeUndefined();
     expect(optionalDateType.safeParse(2).success).toBe(false);
+  });
+
+  it("optionalPurchaseOrderDateFilter allows 0, 1, 2", () => {
+    expect(optionalPurchaseOrderDateFilter.parse(0)).toBe(0);
+    expect(optionalPurchaseOrderDateFilter.parse(2)).toBe(2);
+    expect(optionalPurchaseOrderDateFilter.parse(null)).toBeUndefined();
+    expect(optionalPurchaseOrderDateFilter.safeParse(3).success).toBe(false);
+  });
+
+  it("requiredNumber / optionalNumber / requiredInt", () => {
+    expect(requiredNumber.parse("12.5")).toBe(12.5);
+    expect(optionalNumber.parse(null)).toBeUndefined();
+    expect(optionalNumber.parse("3")).toBe(3);
+    expect(requiredInt.parse("7")).toBe(7);
+    expect(requiredInt.safeParse(1.5).success).toBe(false);
+  });
+});
+
+describe("isoToMeritDateTime / requiredMeritDateTime / optionalMeritDateTime", () => {
+  it("converts date-only ISO to midnight yyyyMMddHHmm", () => {
+    expect(isoToMeritDateTime("2026-08-30")).toBe("202608300000");
+  });
+
+  it("converts ISO datetime to yyyyMMddHHmm (drops seconds)", () => {
+    expect(isoToMeritDateTime("2026-08-30T14:05")).toBe("202608301405");
+    expect(isoToMeritDateTime("2026-08-30T14:05:59")).toBe("202608301405");
+    expect(isoToMeritDateTime("2026-08-30 09:00")).toBe("202608300900");
+    expect(isoToMeritDateTime("2026-08-30T14:05:00Z")).toBe("202608301405");
+  });
+
+  it("requiredMeritDateTime validates calendar and clock", () => {
+    expect(requiredMeritDateTime.parse("2026-01-05T08:30")).toBe("202601050830");
+    expect(requiredMeritDateTime.safeParse("bad").success).toBe(false);
+    expect(requiredMeritDateTime.safeParse("2026-02-30T10:00").success).toBe(false);
+    expect(requiredMeritDateTime.safeParse("2026-01-01T25:00").success).toBe(false);
+  });
+
+  it("optionalMeritDateTime passes undefined/null through", () => {
+    expect(optionalMeritDateTime.parse(undefined)).toBeUndefined();
+    expect(optionalMeritDateTime.parse(null)).toBeUndefined();
+    expect(optionalMeritDateTime.parse("2026-06-01")).toBe("202606010000");
+  });
+
+  it("isoToMeritDateTime throws on unparseable input", () => {
+    expect(() => isoToMeritDateTime("nope")).toThrow(/Expected YYYY-MM-DD/);
   });
 });
 

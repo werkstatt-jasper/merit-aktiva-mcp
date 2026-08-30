@@ -6,7 +6,7 @@ Open-source [Model Context Protocol](https://modelcontextprotocol.io/) server fo
 
 Runs as a stdio MCP server. All tool names are prefixed `merit_`.
 
-> Status: read-tools MVP (customers, vendors, sales invoices, accounts, payments, taxes).
+> Status: read tools (MVP + remaining domains). Write tools land in a follow-up commit.
 > Full documentation lands with the milestone's docs issue.
 
 ## Quick start
@@ -49,7 +49,7 @@ Example MCP client config:
 
 ## Tools
 
-Read-only MVP surface (each `POST`s to the Merit API with signed query auth):
+Each tool `POST`s to the Merit API with signed query auth:
 
 - `merit_list_customers` — `/api/v1/getcustomers`
 - `merit_list_vendors` — `/api/v1/getvendors`
@@ -60,6 +60,28 @@ Read-only MVP surface (each `POST`s to the Merit API with signed query auth):
 - `merit_list_payments` — `/api/v2/getpayments`
 - `merit_list_payment_types` — `/api/v2/getpaymenttypes`
 - `merit_list_taxes` — `/api/v1/gettaxes`
+- `merit_list_purchase_invoices` — `/api/v2/getpurchorders`
+- `merit_get_purchase_invoice` — `/api/v2/getpurchorder`
+- `merit_list_purchase_orders` — `/api/v2/GetPOrders`
+- `merit_list_gl_batches` — `/api/v1/getglbatches`
+- `merit_get_gl_batch` — `/api/v1/getglbatch`
+- `merit_list_gl_batches_full` — `/api/v1/GetGLBatchesFull`
+- `merit_list_items` — `/api/v1/getitems`
+- `merit_list_item_groups` — `/api/v2/getitemgroups`
+- `merit_list_projects` — `/api/v1/getprojects`
+- `merit_list_cost_centers` — `/api/v1/getcostcenters`
+- `merit_list_dimensions` — `/api/v2/getdimensions`
+- `merit_list_departments` — `/api/v1/getdepartments`
+- `merit_list_units` — `/api/v1/getunits`
+- `merit_list_banks` — `/api/v1/getbanks`
+- `merit_list_financial_years` — `/api/v2/getaccperiods`
+- `merit_get_customer_debts_report` — `/api/v1/getcustdebtrep`
+- `merit_get_customer_payments_report` — `/api/v2/getcustpaymrep` (auto-paginated)
+- `merit_get_profit_report` — `/api/v1/getprofitrep`
+- `merit_get_balance_report` — `/api/v1/getbalancerep`
+- `merit_get_inventory_report` — `/api/v2/getinventoryreport`
+- `merit_get_sales_report` — `/api/v2/getsalesrep`
+- `merit_get_purchase_report` — `/api/v2/getpurchrep`
 
 Date arguments accept ISO `YYYY-MM-DD` and are converted to Merit's `yyyymmdd` wire
 format. Period filters (`periodStart`/`periodEnd`) are capped by Merit at 3 months.

@@ -102,3 +102,112 @@ export interface MeritTax {
   TaxPct?: number;
   [key: string]: unknown;
 }
+
+export interface MeritPurchaseInvoiceListItem {
+  PIHId?: string;
+  BillNo?: string;
+  DocumentDate?: string;
+  VendorId?: string;
+  VendorName?: string;
+  TotalAmount?: number;
+  TotalSum?: number;
+  Paid?: boolean;
+  [key: string]: unknown;
+}
+
+export interface MeritPurchaseInvoiceDetail {
+  Header?: Record<string, unknown>;
+  Lines?: Array<Record<string, unknown>>;
+  Payments?: Array<Record<string, unknown>>;
+  Attachment?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface MeritPurchaseOrderListItem {
+  PIHId?: string;
+  BillNo?: string;
+  VendorName?: string;
+  Status0?: number;
+  [key: string]: unknown;
+}
+
+export interface MeritGlBatchListItem {
+  GLBId?: string;
+  BatchCode?: string;
+  No?: string;
+  Document?: string;
+  BatchDate?: string;
+  TotalAmount?: number;
+  [key: string]: unknown;
+}
+
+export interface MeritGlBatchDetail {
+  Header?: Record<string, unknown>;
+  Lines?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface MeritItem {
+  ItemId?: string;
+  Code?: string;
+  Name?: string;
+  Type?: number;
+  Usage?: number;
+  [key: string]: unknown;
+}
+
+export interface MeritItemGroup {
+  Code?: string;
+  Name?: string;
+  Id?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritCustomerGroup {
+  Id?: string;
+  Name?: string;
+  Code?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritVendorGroup {
+  Id?: string;
+  Name?: string;
+  Code?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritNamedCode {
+  Code?: string;
+  Name?: string;
+  Id?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritDimension {
+  DimId?: number | string;
+  Name?: string;
+  Type?: number;
+  Values?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface MeritBank {
+  Id?: string;
+  Name?: string;
+  IBAN?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritFinancialYear {
+  Id?: string;
+  StartDate?: string;
+  EndDate?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritIdNameResult {
+  Id?: string;
+  Name?: string;
+  [key: string]: unknown;
+}

@@ -1,0 +1,9 @@
+{
+  "projects": [{ "Code": "P1", "Name": "Project 1" }],
+  "costCenters": [{ "Code": "CC1", "Name": "Cost center 1" }],
+  "dimensions": [{ "DimId": 1, "Name": "Department", "Type": 1, "Values": [] }],
+  "departments": [{ "Code": "D1", "Name": "Admin" }],
+  "units": [{ "Name": "tk" }],
+  "banks": [{ "Id": "ffffffff-0000-4111-8222-333333333333", "Name": "Swedbank", "IBAN": "EE11" }],
+  "years": [{ "StartDate": "2026-01-01", "EndDate": "2026-12-31" }]
+}

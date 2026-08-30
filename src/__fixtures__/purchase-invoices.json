@@ -1,0 +1,33 @@
+{
+  "list": [
+    {
+      "PIHId": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "BillNo": "PI-100",
+      "DocumentDate": "2026-08-10T00:00:00",
+      "VendorId": "11111111-2222-4333-8444-555555555555",
+      "VendorName": "Näidis Tarnija OÜ",
+      "TotalAmount": 80.0,
+      "TotalSum": 97.6,
+      "Paid": false
+    }
+  ],
+  "detail": {
+    "Header": {
+      "PIHId": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "BillNo": "PI-100",
+      "VendorName": "Näidis Tarnija OÜ",
+      "TotalAmount": 80.0,
+      "Paid": false
+    },
+    "Lines": [{ "ArticleCode": "TEENUS", "Quantity": 1, "Price": 80 }],
+    "Payments": []
+  },
+  "orders": [
+    {
+      "PIHId": "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+      "BillNo": "PO-1",
+      "VendorName": "Näidis Tarnija OÜ",
+      "Status0": 1
+    }
+  ]
+}

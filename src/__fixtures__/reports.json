@@ -1,0 +1,9 @@
+{
+  "debts": [{ "PartnerName": "Näidis", "UnPaidAmount": 122 }],
+  "payments": [{ "CustName": "Näidis", "DocNo": "1001", "TotalAmount": 122 }],
+  "profit": { "ErrorMsg": null, "Data": [] },
+  "balance": { "ErrorMsg": null, "Data": [] },
+  "inventory": [],
+  "sales": [],
+  "purchase": []
+}

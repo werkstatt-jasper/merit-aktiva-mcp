@@ -1,0 +1,25 @@
+{
+  "list": [
+    {
+      "GLBId": "cccccccc-dddd-4eee-8fff-000000000000",
+      "BatchCode": "GL",
+      "No": "12",
+      "Document": "MEMO-12",
+      "BatchDate": "2026-08-15T00:00:00",
+      "TotalAmount": 50.0
+    }
+  ],
+  "detail": {
+    "Header": {
+      "GLBId": "cccccccc-dddd-4eee-8fff-000000000000",
+      "BatchCode": "GL",
+      "No": "12",
+      "Document": "MEMO-12",
+      "BatchDate": "2026-08-15T00:00:00"
+    },
+    "Lines": [
+      { "AccountCode": "1910", "DebitAmount": 50, "CreditAmount": 0, "Memo": "test" },
+      { "AccountCode": "5610", "DebitAmount": 0, "CreditAmount": 50, "Memo": "test" }
+    ]
+  }
+}
