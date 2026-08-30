@@ -121,6 +121,34 @@ describe("payment write tools", () => {
     });
   });
 
+  it("creates a sales offer payment with yyyyMMddHHmm date", async () => {
+    vi.mocked(client.post).mockResolvedValue({});
+    await tools.merit_create_sales_offer_payment.handler({
+      customerName: "Näidis",
+      offerNo: "OFF-1",
+      paymentDate: "2026-08-30T09:15",
+      amount: 50,
+      currencyRate: 1,
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/sendPaymentO", {
+      CustomerName: "Näidis",
+      OfferNo: "OFF-1",
+      PaymentDate: "202608300915",
+      Amount: 50,
+      BankId: undefined,
+      IBAN: undefined,
+      RefNo: undefined,
+      CurrencyCode: undefined,
+      CurrencyRate: 1,
+    });
+  });
+
+  it("rejects offer payment without required fields", async () => {
+    await expect(tools.merit_create_sales_offer_payment.handler({})).rejects.toThrow(
+      /customerName/,
+    );
+  });
+
   it("deletes a payment", async () => {
     vi.mocked(client.post).mockResolvedValue({});
     await tools.merit_delete_payment.handler({ id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee" });

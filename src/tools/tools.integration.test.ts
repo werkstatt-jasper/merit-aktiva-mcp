@@ -185,6 +185,101 @@ describe.skipIf(!hasCredentials)("M4/M5 live tools", () => {
     // Size only — never log payloads.
     expect(Object.values(counts).every((n) => Number.isFinite(n))).toBe(true);
   });
+
+  it("smokes M6 read tools (counts only)", async () => {
+    const counts: Record<string, number> = {};
+    const listCalls: Array<[string, unknown]> = [
+      ["merit_list_sales_offers", { periodStart: monthAgo, periodEnd: today }],
+      ["merit_list_recurring_invoices", { periodStart: monthAgo, periodEnd: today }],
+      ["merit_list_recurring_invoice_addresses", {}],
+      ["merit_list_locations", {}],
+      ["merit_list_inventory_movements", { periodStart: monthAgo, periodEnd: today }],
+      ["merit_list_fixed_asset_locations", {}],
+      ["merit_list_fixed_asset_employees", {}],
+      ["merit_list_fixed_assets", {}],
+      ["merit_list_prices", {}],
+      ["merit_list_discounts", {}],
+    ];
+
+    for (const [name, args] of listCalls) {
+      const parsed = parseJson(await tools[name].handler(args));
+      counts[name] = Array.isArray(parsed) ? parsed.length : 1;
+    }
+
+    expect(Object.keys(counts).length).toBe(10);
+    expect(Object.values(counts).every((n) => Number.isFinite(n))).toBe(true);
+  });
+
+  it("optionally creates, gets, and cancels one sales offer", async () => {
+    const taxes = parseJson(await tools.merit_list_taxes.handler({}));
+    const taxList = Array.isArray(taxes) ? (taxes as Array<Record<string, unknown>>) : [];
+    const vat22 = taxList.find((t) => t.TaxPct === 22) ?? taxList[0];
+    if (typeof vat22?.Id !== "string") {
+      return;
+    }
+    const taxId = String(vat22.Id);
+    const offerNo = `O${stamp}`.slice(0, 35);
+    const itemCode = `MO${stamp}`.slice(0, 20);
+
+    try {
+      await tools.merit_create_items.handler({
+        items: [{ type: 2, usage: 3, code: itemCode, description: `MCP offer ${stamp}` }],
+      });
+    } catch {
+      // reuse an existing item if create is rejected
+    }
+
+    let offerId: string | undefined;
+    try {
+      const created = parseJson(
+        await tools.merit_create_sales_offer.handler({
+          customer: { name: `MCP Offer ${stamp}`, notTDCustomer: true, countryCode: "EE" },
+          offerNo,
+          docDate: today,
+          docType: 1,
+          offerRows: [
+            {
+              item: { code: itemCode, description: `MCP offer ${stamp}`, type: 2 },
+              quantity: 1,
+              price: 10,
+              taxId,
+            },
+          ],
+          taxAmount: [{ taxId, amount: 2.2 }],
+          totalAmount: 10,
+        }),
+      );
+      offerId = firstGuid(created);
+      if (!offerId) {
+        const listed = parseJson(
+          await tools.merit_list_sales_offers.handler({
+            periodStart: monthAgo,
+            periodEnd: today,
+          }),
+        );
+        const rows = Array.isArray(listed) ? listed : [];
+        const match = rows.find(
+          (row) =>
+            row && typeof row === "object" && (row as Record<string, unknown>).OfferNo === offerNo,
+        );
+        offerId = firstGuid(match);
+      }
+    } catch {
+      return;
+    }
+
+    if (!offerId) {
+      return;
+    }
+
+    const detail = parseJson(await tools.merit_get_sales_offer.handler({ id: offerId }));
+    expect(detail).toBeTruthy();
+    try {
+      await tools.merit_set_sales_offer_status.handler({ id: offerId, newStatus: 7 });
+    } catch {
+      // cancel is best-effort on TestApi
+    }
+  });
 });
 
 describe.skipIf(hasCredentials)("M4/M5 live tools (no credentials)", () => {

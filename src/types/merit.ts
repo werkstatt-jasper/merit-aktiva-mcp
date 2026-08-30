@@ -211,3 +211,100 @@ export interface MeritIdNameResult {
   Name?: string;
   [key: string]: unknown;
 }
+
+export interface MeritSalesOfferListItem {
+  SIHId?: string;
+  OfferNo?: string;
+  DocumentDate?: string;
+  CustomerId?: string;
+  CustomerName?: string;
+  DocType?: number;
+  DocStatus?: number;
+  TotalAmount?: number;
+  TotalSum?: number;
+  [key: string]: unknown;
+}
+
+export interface MeritSalesOfferDetail {
+  OfferId?: string;
+  CustomerId?: string;
+  CustomerName?: string;
+  OfferNo?: string;
+  OfferRow?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface MeritInvoicePdf {
+  FileName?: string;
+  FileContent?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritRecurringInvoiceListItem {
+  SIHId?: string;
+  InvoiceNo?: string;
+  CustomerId?: string;
+  CustomerName?: string;
+  NextDate?: string;
+  Cycle?: number;
+  Period?: number;
+  [key: string]: unknown;
+}
+
+export interface MeritRecurringInvoiceDetail {
+  InvoiceNo?: string;
+  CustomerName?: string;
+  Lines?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+export interface MeritRecurringInvoiceAddress {
+  Id?: string;
+  InvoiceNo?: string;
+  Address?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritLocation {
+  LocationId?: string;
+  Code?: string;
+  Name?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritInventoryMovement {
+  DocumentId?: string;
+  DocDate?: string;
+  DocNo?: string;
+  Type?: number;
+  [key: string]: unknown;
+}
+
+export interface MeritFixedAsset {
+  FAId?: string;
+  InventaryNo?: string;
+  Name?: string;
+  [key: string]: unknown;
+}
+
+export interface MeritPrice {
+  Id?: string;
+  ItemId?: string;
+  ItemCode?: string;
+  Price0?: number;
+  [key: string]: unknown;
+}
+
+export interface MeritPriceQuote {
+  ItemCode?: string;
+  Price?: number;
+  DiscountPct?: number;
+  [key: string]: unknown;
+}
+
+export interface MeritDiscount {
+  Id?: string;
+  GroupName?: string;
+  Discount0?: number;
+  [key: string]: unknown;
+}

@@ -6,8 +6,10 @@ Open-source [Model Context Protocol](https://modelcontextprotocol.io/) server fo
 
 Runs as a stdio MCP server. All tool names are prefixed `merit_`.
 
-> Status: read + write tools for the core accounting surface. Extended domains (offers,
-> recurring, inventory movements, e-invoice send) are a later milestone issue.
+> Status: read + write tools for the core accounting surface plus extended domains
+> (sales offers, invoice email/PDF/e-invoice, recurring invoices, inventory movements,
+> fixed assets, prices/discounts). Bank import, settlements, expense/income/prepayments,
+> and dimension/tax/unit mutations are deferred.
 > Full documentation lands with the milestone's docs issue.
 
 ## Quick start
@@ -102,9 +104,38 @@ Each tool `POST`s to the Merit API with signed query auth:
 - `merit_create_items` — `/api/v2/senditems`
 - `merit_update_item` — `/api/v1/updateitem`
 - `merit_create_item_groups` — `/api/v2/senditemgroups`
+- `merit_list_sales_offers` — `/api/v2/getoffers`
+- `merit_get_sales_offer` — `/api/v2/getoffer`
+- `merit_create_sales_offer` — `/api/v2/sendoffer`
+- `merit_update_sales_offer` — `/api/v2/updateoffer`
+- `merit_set_sales_offer_status` — `/api/v2/setofferstatus`
+- `merit_create_invoice_from_sales_offer` — `/api/v2/offer2inv`
+- `merit_create_sales_offer_payment` — `/api/v2/sendPaymentO`
+- `merit_email_sales_invoice` — `/api/v2/sendinvoicebyemail` (sends email)
+- `merit_send_sales_invoice_einvoice` — `/api/v2/sendinvoiceaseinv` (sends e-invoice)
+- `merit_get_sales_invoice_pdf` — `/api/v2/getsalesinvpdf`
+- `merit_list_recurring_invoices` — `/api/v2/getperinvoices` (period = next-invoice date, max 180 days)
+- `merit_get_recurring_invoice` — `/api/v2/getperinvoice`
+- `merit_create_recurring_invoice` — `/api/v2/sendperinvoice`
+- `merit_list_recurring_invoice_addresses` — `/api/v2/getpershaddress`
+- `merit_send_recurring_indication_values` — `/api/v1/sendindvalues`
+- `merit_list_locations` — `/api/v2/getlocations`
+- `merit_list_inventory_movements` — `/api/v2/getinvmovements`
+- `merit_create_inventory_movement` — `/api/v2/SendInvMovement`
+- `merit_list_fixed_asset_locations` — `/api/v2/getfalocations`
+- `merit_list_fixed_asset_employees` — `/api/v2/getfaresppersons`
+- `merit_list_fixed_assets` — `/api/v2/getfixassets`
+- `merit_create_fixed_assets` — `/api/v2/sendfixedassets`
+- `merit_list_prices` — `/api/v2/getprices`
+- `merit_get_price` — `/api/v2/getprice`
+- `merit_send_prices` — `/api/v2/sendprices`
+- `merit_list_discounts` — `/api/v2/getdiscounts`
+- `merit_send_discounts` — `/api/v2/senddiscounts`
 
 Date arguments accept ISO `YYYY-MM-DD` and are converted to Merit's `yyyymmdd` wire
-format. Period filters (`periodStart`/`periodEnd`) are capped by Merit at 3 months.
+format. Period filters (`periodStart`/`periodEnd`) are capped by Merit at 3 months,
+except recurring-invoice lists (max 180 days). Offer and purchase-invoice payments
+send `PaymentDate` as `yyyyMMddHHmm`.
 
 ## Development
 

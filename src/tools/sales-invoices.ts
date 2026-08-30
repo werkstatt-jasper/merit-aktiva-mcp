@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import type { MeritClient } from "../client.js";
-import type { MeritSalesInvoiceDetail, MeritSalesInvoiceListItem } from "../types/merit.js";
+import type {
+  MeritInvoicePdf,
+  MeritSalesInvoiceDetail,
+  MeritSalesInvoiceListItem,
+} from "../types/merit.js";
 import {
   guidString,
   optionalBoolean,
@@ -200,6 +204,83 @@ export function createSalesInvoiceTools(client: MeritClient) {
       },
     },
 
+    merit_email_sales_invoice: {
+      description:
+        "SENDS EMAIL: email a Merit Aktiva sales invoice to the customer " +
+        "(POST /api/v2/sendinvoicebyemail). id is the invoice GUID (SIHId). Set delivNote to " +
+        "send a delivery note without prices.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          id: { type: "string", description: "Invoice GUID / SIHId (required)" },
+          delivNote: {
+            type: "boolean",
+            description: "If true, send a delivery note without prices",
+          },
+        },
+        required: ["id"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(sendInvoiceSchema, params);
+        const response = await client.post<unknown>("/api/v2/sendinvoicebyemail", {
+          Id: args.id,
+          DelivNote: args.delivNote,
+        });
+        return jsonToolResult(response);
+      },
+    },
+
+    merit_send_sales_invoice_einvoice: {
+      description:
+        "SENDS E-INVOICE: send a Merit Aktiva sales invoice as an e-invoice " +
+        "(POST /api/v2/sendinvoiceaseinv). id is the invoice GUID (SIHId). Receiver not " +
+        "capable returns api-noeinv. Set delivNote to send without prices.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          id: { type: "string", description: "Invoice GUID / SIHId (required)" },
+          delivNote: {
+            type: "boolean",
+            description: "If true, send a delivery note without prices",
+          },
+        },
+        required: ["id"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(sendInvoiceSchema, params);
+        const response = await client.post<unknown>("/api/v2/sendinvoiceaseinv", {
+          Id: args.id,
+          DelivNote: args.delivNote,
+        });
+        return jsonToolResult(response);
+      },
+    },
+
+    merit_get_sales_invoice_pdf: {
+      description:
+        "Get a Merit Aktiva sales invoice PDF as base64 (POST /api/v2/getsalesinvpdf). " +
+        "Returns FileName + FileContent. Set delivNote for a delivery note without prices.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          id: { type: "string", description: "Invoice GUID / SIHId (required)" },
+          delivNote: {
+            type: "boolean",
+            description: "If true, return a delivery note without prices",
+          },
+        },
+        required: ["id"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(sendInvoiceSchema, params);
+        const response = await client.post<MeritInvoicePdf>("/api/v2/getsalesinvpdf", {
+          Id: args.id,
+          DelivNote: args.delivNote,
+        });
+        return jsonToolResult(response);
+      },
+    },
+
     merit_delete_sales_invoice: {
       description:
         "DESTRUCTIVE: delete a Merit Aktiva sales invoice (POST /api/v1/deleteinvoice). " +
@@ -238,4 +319,9 @@ const createSalesInvoiceSchema = z.object({
 
 const deleteByIdSchema = z.object({
   id: guidString,
+});
+
+const sendInvoiceSchema = z.object({
+  id: guidString,
+  delivNote: optionalBoolean,
 });

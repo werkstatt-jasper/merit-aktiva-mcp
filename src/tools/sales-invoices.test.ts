@@ -180,4 +180,52 @@ describe("merit_get_sales_invoice", () => {
       tools.merit_get_sales_invoice.handler({ id: "9e8d7c6b-5a49-4838-a726-150493827160" }),
     ).rejects.toThrow("boom");
   });
+
+  it("emails a sales invoice", async () => {
+    vi.mocked(client.post).mockResolvedValue("OK");
+    expect(tools.merit_email_sales_invoice.description).toMatch(/SENDS EMAIL/);
+    await tools.merit_email_sales_invoice.handler({
+      id: "9e8d7c6b-5a49-4838-a726-150493827160",
+      delivNote: true,
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/sendinvoicebyemail", {
+      Id: "9e8d7c6b-5a49-4838-a726-150493827160",
+      DelivNote: true,
+    });
+  });
+
+  it("sends a sales invoice as an e-invoice", async () => {
+    vi.mocked(client.post).mockResolvedValue("api-noeinv");
+    expect(tools.merit_send_sales_invoice_einvoice.description).toMatch(/SENDS E-INVOICE/);
+    await tools.merit_send_sales_invoice_einvoice.handler({
+      id: "9e8d7c6b-5a49-4838-a726-150493827160",
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/sendinvoiceaseinv", {
+      Id: "9e8d7c6b-5a49-4838-a726-150493827160",
+      DelivNote: undefined,
+    });
+  });
+
+  it("gets a sales invoice PDF", async () => {
+    vi.mocked(client.post).mockResolvedValue({ FileName: "1001.pdf", FileContent: "JVBERi0=" });
+    const result = await tools.merit_get_sales_invoice_pdf.handler({
+      id: "9e8d7c6b-5a49-4838-a726-150493827160",
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/getsalesinvpdf", {
+      Id: "9e8d7c6b-5a49-4838-a726-150493827160",
+      DelivNote: undefined,
+    });
+    expect(JSON.parse(result.content[0].text)).toEqual({
+      FileName: "1001.pdf",
+      FileContent: "JVBERi0=",
+    });
+  });
+
+  it("rejects invoice send tools without a GUID", async () => {
+    await expect(tools.merit_email_sales_invoice.handler({})).rejects.toThrow(/id/);
+    await expect(tools.merit_send_sales_invoice_einvoice.handler({ id: "x" })).rejects.toThrow(
+      /GUID/,
+    );
+    await expect(tools.merit_get_sales_invoice_pdf.handler({})).rejects.toThrow(/id/);
+  });
 });

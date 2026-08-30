@@ -1,0 +1,18 @@
+{
+  "prices": [
+    {
+      "Id": "01010101-0202-4303-8404-050505050505",
+      "ItemCode": "TEENUS",
+      "ItemName": "Teenus",
+      "Price0": 100
+    }
+  ],
+  "quote": { "ItemCode": "TEENUS", "Price": 90, "DiscountPct": 10 },
+  "discounts": [
+    {
+      "Id": "12121212-1313-4414-8515-161616161616",
+      "GroupName": "VIP",
+      "Discount0": 10
+    }
+  ]
+}

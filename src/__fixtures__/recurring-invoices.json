@@ -1,0 +1,21 @@
+{
+  "list": [
+    {
+      "SIHId": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "InvoiceNo": "PER-1",
+      "CustomerName": "Näidis Klient OÜ",
+      "NextDate": "2026-09-01T00:00:00",
+      "Cycle": 1,
+      "Period": 2
+    }
+  ],
+  "detail": {
+    "InvoiceNo": "PER-1",
+    "CustomerName": "Näidis Klient OÜ",
+    "Cycle": 1,
+    "Lines": [{ "ItemCode": "TEENUS", "Quantity": 1, "Price": 50 }]
+  },
+  "addresses": [
+    { "Id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", "InvoiceNo": "PER-1", "Address": "Tartu" }
+  ]
+}

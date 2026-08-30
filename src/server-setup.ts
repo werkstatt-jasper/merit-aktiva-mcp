@@ -6,13 +6,18 @@ import type { MeritClient } from "./client.js";
 import { logger } from "./logger.js";
 import { createAccountTools } from "./tools/accounts.js";
 import { createCustomerTools } from "./tools/customers.js";
+import { createFixedAssetTools } from "./tools/fixed-assets.js";
 import { createGlTransactionTools } from "./tools/gl-transactions.js";
+import { createInventoryTools } from "./tools/inventory.js";
 import { createItemTools } from "./tools/items.js";
 import { createPaymentTools } from "./tools/payments.js";
+import { createPriceTools } from "./tools/prices.js";
 import { createPurchaseInvoiceTools } from "./tools/purchase-invoices.js";
+import { createRecurringInvoiceTools } from "./tools/recurring-invoices.js";
 import { createReferenceDataTools } from "./tools/reference-data.js";
 import { createReportTools } from "./tools/reports.js";
 import { createSalesInvoiceTools } from "./tools/sales-invoices.js";
+import { createSalesOfferTools } from "./tools/sales-offers.js";
 import { createTaxTools } from "./tools/taxes.js";
 import { createVendorTools } from "./tools/vendors.js";
 
@@ -44,6 +49,11 @@ export function buildAllTools(client: MeritClient): ToolRecord {
     ...createItemTools(client),
     ...createReferenceDataTools(client),
     ...createReportTools(client),
+    ...createSalesOfferTools(client),
+    ...createRecurringInvoiceTools(client),
+    ...createInventoryTools(client),
+    ...createFixedAssetTools(client),
+    ...createPriceTools(client),
   };
 }
 

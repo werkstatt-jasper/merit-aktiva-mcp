@@ -7,6 +7,7 @@ import {
   optionalDateType,
   optionalGuid,
   optionalInt,
+  optionalNumber,
   optionalString,
   parseToolArgs,
   requiredMeritDate,
@@ -94,8 +95,7 @@ export function createPaymentTools(client: MeritClient) {
       description:
         "Record a payment against a sales invoice (POST /api/v2/sendpayment). Identify the " +
         "invoice with customerName + invoiceNo. Provide bankId or IBAN (IBAN must match a " +
-        "payment method). paymentDate is ISO YYYY-MM-DD. Partial payments are allowed. " +
-        "Offer payments are deferred to M6.",
+        "payment method). paymentDate is ISO YYYY-MM-DD. Partial payments are allowed.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -164,6 +164,46 @@ export function createPaymentTools(client: MeritClient) {
       },
     },
 
+    merit_create_sales_offer_payment: {
+      description:
+        "Record a payment against a sales offer (POST /api/v2/sendPaymentO). Identify the " +
+        "offer with customerName + offerNo. paymentDate is ISO date or datetime and is sent as " +
+        "yyyyMMddHHmm (Merit's documented format for this endpoint).",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          customerName: { type: "string", description: "Customer name (required)" },
+          offerNo: { type: "string", description: "Sales offer number (required)" },
+          paymentDate: {
+            type: "string",
+            description: "ISO YYYY-MM-DD or YYYY-MM-DDTHH:mm (required)",
+          },
+          amount: { type: "number", description: "Payment amount (required)" },
+          bankId: { type: "string" },
+          iban: { type: "string" },
+          refNo: { type: "string" },
+          currencyCode: { type: "string", description: "Required if not local currency" },
+          currencyRate: { type: "number" },
+        },
+        required: ["customerName", "offerNo", "paymentDate", "amount"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(createOfferPaymentSchema, params);
+        const response = await client.post<unknown>("/api/v2/sendPaymentO", {
+          CustomerName: args.customerName,
+          OfferNo: args.offerNo,
+          PaymentDate: args.paymentDate,
+          Amount: args.amount,
+          BankId: args.bankId,
+          IBAN: args.iban,
+          RefNo: args.refNo,
+          CurrencyCode: args.currencyCode,
+          CurrencyRate: args.currencyRate,
+        });
+        return jsonToolResult(response);
+      },
+    },
+
     merit_delete_payment: {
       description:
         "DESTRUCTIVE: delete a Merit Aktiva payment (POST /api/v1/deletepayment). id is the " +
@@ -204,6 +244,18 @@ const createPurchasePaymentSchema = z.object({
   iban: optionalString,
   refNo: optionalString,
   currencyCode: optionalString,
+});
+
+const createOfferPaymentSchema = z.object({
+  customerName: z.string().min(1),
+  offerNo: z.string().min(1),
+  paymentDate: requiredMeritDateTime,
+  amount: requiredNumber,
+  bankId: optionalGuid,
+  iban: optionalString,
+  refNo: optionalString,
+  currencyCode: optionalString,
+  currencyRate: optionalNumber,
 });
 
 const deleteByIdSchema = z.object({

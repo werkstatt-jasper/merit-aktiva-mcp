@@ -1,0 +1,13 @@
+{
+  "locations": [
+    { "LocationId": "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff", "Code": "LAO", "Name": "Põhiladu" }
+  ],
+  "movements": [
+    {
+      "DocumentId": "cccccccc-dddd-4eee-8fff-000000000000",
+      "DocDate": "2026-08-10T00:00:00",
+      "DocNo": "IN-1",
+      "Type": 1
+    }
+  ]
+}

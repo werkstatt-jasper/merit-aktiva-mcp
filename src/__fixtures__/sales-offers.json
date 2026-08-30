@@ -1,0 +1,22 @@
+{
+  "list": [
+    {
+      "SIHId": "11111111-2222-4333-8444-555555555555",
+      "OfferNo": "OFF-1",
+      "DocumentDate": "2026-08-05T00:00:00",
+      "CustomerName": "Näidis Klient OÜ",
+      "DocType": 1,
+      "DocStatus": 1,
+      "TotalAmount": 100.0,
+      "TotalSum": 122.0
+    }
+  ],
+  "detail": {
+    "OfferId": "11111111-2222-4333-8444-555555555555",
+    "OfferNo": "OFF-1",
+    "CustomerName": "Näidis Klient OÜ",
+    "DocType": 1,
+    "DocStatus": 1,
+    "OfferRow": [{ "ArticleCode": "TEENUS", "Quantity": 1, "Price": 100 }]
+  }
+}
