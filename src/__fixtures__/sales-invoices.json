@@ -1,0 +1,54 @@
+{
+  "list": [
+    {
+      "SIHId": "9e8d7c6b-5a49-4838-a726-150493827160",
+      "InvoiceNo": "1001",
+      "DocumentDate": "2026-08-05T00:00:00",
+      "TransactionDate": "2026-08-05T00:00:00",
+      "CustomerId": "3a274294-9c60-4a3d-93f0-1874253f073e",
+      "CustomerName": "Näidis Klient OÜ",
+      "CustomerRegNo": "12345678",
+      "DueDate": "2026-08-19T00:00:00",
+      "CurrencyCode": "EUR",
+      "TaxAmount": 22.0,
+      "TotalAmount": 100.0,
+      "TotalSum": 122.0,
+      "PaidAmount": 0.0,
+      "Paid": false,
+      "ChangedDate": "2026-08-05T09:30:00"
+    }
+  ],
+  "detail": {
+    "Header": {
+      "SIHId": "9e8d7c6b-5a49-4838-a726-150493827160",
+      "InvoiceNo": "1001",
+      "DocumentDate": "2026-08-05T00:00:00",
+      "CustomerName": "Näidis Klient OÜ",
+      "DueDate": "2026-08-19T00:00:00",
+      "CurrencyCode": "EUR",
+      "TaxAmount": 22.0,
+      "TotalAmount": 100.0,
+      "TotalSum": 122.0,
+      "PriceInclVat": false,
+      "Paid": false
+    },
+    "Lines": [
+      {
+        "SILId": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+        "ArticleCode": "TEENUS",
+        "Quantity": 1.0,
+        "Price": 100.0,
+        "TaxId": "aa11bb22-cc33-4d44-9e55-ff6677889900",
+        "TaxName": "22%",
+        "TaxPct": 22.0,
+        "AmountExclVat": 100.0,
+        "AmountInclVat": 122.0,
+        "VatAmount": 22.0,
+        "AccountCode": "3000",
+        "Description": "Konsultatsiooniteenus",
+        "UOMName": "tk"
+      }
+    ],
+    "Payments": []
+  }
+}

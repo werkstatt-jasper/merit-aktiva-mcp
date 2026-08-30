@@ -1,0 +1,18 @@
+{
+  "list": [
+    {
+      "Id": "aa11bb22-cc33-4d44-9e55-ff6677889900",
+      "Code": "1",
+      "Name": "22%",
+      "NameEN": "22%",
+      "TaxPct": 22.0
+    },
+    {
+      "Id": "aa11bb22-cc33-4d44-9e55-ff6677889901",
+      "Code": "3",
+      "Name": "0% käive",
+      "NameEN": "0% turnover",
+      "TaxPct": 0.0
+    }
+  ]
+}

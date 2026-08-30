@@ -12,6 +12,14 @@ vi.mock("./server-setup.js", async () => {
   };
 });
 
+vi.mock("./auth.js", () => ({
+  loadAuthConfig: vi.fn(() => ({
+    apiId: "test-id",
+    apiKey: "test-key",
+    baseUrl: "https://aktiva.merit.ee",
+  })),
+}));
+
 const mockSetRequestHandler = vi.fn();
 const mockConnect = vi.fn().mockResolvedValue(undefined);
 
@@ -44,7 +52,13 @@ describe("startApp", () => {
     const spyTools = vi.spyOn(serverSetup, "registerMcpToolHandlers");
     await startApp();
 
-    expect(spyTools).toHaveBeenCalledWith(expect.anything(), {});
+    expect(spyTools).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        merit_list_customers: expect.anything(),
+        merit_list_taxes: expect.anything(),
+      }),
+    );
     spyTools.mockRestore();
 
     expect(Server).toHaveBeenCalledWith(

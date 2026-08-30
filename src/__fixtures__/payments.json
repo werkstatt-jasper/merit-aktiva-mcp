@@ -1,0 +1,25 @@
+{
+  "list": [
+    {
+      "PIHId": "deadbeef-0001-4a2b-8c3d-445566778899",
+      "BankName": "Swedbank",
+      "CounterPartType": 2,
+      "CounterPartName": "Näidis Klient OÜ",
+      "CounterPartId": "3a274294-9c60-4a3d-93f0-1874253f073e",
+      "CurrencyCode": "EUR",
+      "CurrencyRate": 1.0,
+      "DocumentDate": "2026-08-10T00:00:00",
+      "DocumentNo": "1001",
+      "Direction": 1,
+      "Amount": 122.0,
+      "ChangedDate": "2026-08-10T14:00:00"
+    }
+  ],
+  "types": [
+    {
+      "Id": "feedface-0002-4b3c-9d4e-556677889900",
+      "Name": "Pank (Swedbank)",
+      "Type": 3
+    }
+  ]
+}

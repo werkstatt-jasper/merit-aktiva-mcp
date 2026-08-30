@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { MeritClient } from "./client.js";
 import type { ToolRecord } from "./server-setup.js";
 import { buildAllTools, registerMcpToolHandlers, startStdioServer } from "./server-setup.js";
 
@@ -22,8 +23,24 @@ vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 describe("buildAllTools", () => {
-  it("returns the placeholder empty catalog", () => {
-    expect(buildAllTools()).toEqual({});
+  it("merges all read tools with merit_ prefixes", () => {
+    const client = {} as MeritClient;
+    const tools = buildAllTools(client);
+    expect(tools.merit_list_customers).toBeDefined();
+    expect(tools.merit_list_vendors).toBeDefined();
+    expect(tools.merit_list_sales_invoices).toBeDefined();
+    expect(tools.merit_list_sales_invoices_by_number_or_customer).toBeDefined();
+    expect(tools.merit_get_sales_invoice).toBeDefined();
+    expect(tools.merit_list_accounts).toBeDefined();
+    expect(tools.merit_list_payments).toBeDefined();
+    expect(tools.merit_list_payment_types).toBeDefined();
+    expect(tools.merit_list_taxes).toBeDefined();
+    expect(Object.keys(tools)).toHaveLength(9);
+    for (const [name, tool] of Object.entries(tools)) {
+      expect(name).toMatch(/^merit_/);
+      expect(tool.description.length).toBeGreaterThan(20);
+      expect(tool.inputSchema).toMatchObject({ type: "object" });
+    }
   });
 });
 

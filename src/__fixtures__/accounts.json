@@ -1,0 +1,20 @@
+{
+  "list": [
+    {
+      "AccountId": "c0ffee00-1234-4abc-9def-001122334455",
+      "NoActive": false,
+      "Code": "1000",
+      "Name": "Kassa",
+      "TaxName": "",
+      "IsParent": false
+    },
+    {
+      "AccountId": "c0ffee00-1234-4abc-9def-001122334456",
+      "NoActive": false,
+      "Code": "4000",
+      "Name": "Kaubad, toore, materjal ja teenused",
+      "TaxName": "22%",
+      "IsParent": false
+    }
+  ]
+}

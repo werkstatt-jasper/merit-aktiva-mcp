@@ -1,0 +1,31 @@
+{
+  "list": [
+    {
+      "CustomerId": "3a274294-9c60-4a3d-93f0-1874253f073e",
+      "Name": "Näidis Klient OÜ",
+      "RegNo": "12345678",
+      "VatRegNo": "EE101234567",
+      "Contact": "Mari Maasikas",
+      "PhoneNo": "+372 5555 5555",
+      "Address": "Tartu mnt 1",
+      "City": "Tallinn",
+      "CountryCode": "EE",
+      "Email": "info@naidisklient.ee",
+      "CurrencyCode": "EUR",
+      "PaymentDeadLine": 14,
+      "NotTDCustomer": false,
+      "ChangedDate": "2026-08-01T10:15:00"
+    },
+    {
+      "CustomerId": "b1f7c2aa-0d43-4d21-8f11-52a4c3b9e001",
+      "Name": "Teine Klient AS",
+      "RegNo": "87654321",
+      "VatRegNo": "EE107654321",
+      "CountryCode": "EE",
+      "Email": "arved@teineklient.ee",
+      "CurrencyCode": "EUR",
+      "NotTDCustomer": true,
+      "ChangedDate": "2026-07-15T08:00:00"
+    }
+  ]
+}

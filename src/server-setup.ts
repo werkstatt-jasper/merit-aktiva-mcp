@@ -2,7 +2,14 @@ import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 
+import type { MeritClient } from "./client.js";
 import { logger } from "./logger.js";
+import { createAccountTools } from "./tools/accounts.js";
+import { createCustomerTools } from "./tools/customers.js";
+import { createPaymentTools } from "./tools/payments.js";
+import { createSalesInvoiceTools } from "./tools/sales-invoices.js";
+import { createTaxTools } from "./tools/taxes.js";
+import { createVendorTools } from "./tools/vendors.js";
 
 // biome-ignore lint/suspicious/noExplicitAny: tool handlers use per-tool param shapes
 export type ToolHandler = (params: any) => Promise<{
@@ -18,9 +25,16 @@ export type ToolRecord = Record<
   }
 >;
 
-/** Placeholder catalog until the read-tools MVP lands (M3). */
-export function buildAllTools(): ToolRecord {
-  return {};
+/** Registers all Merit Aktiva MCP tools (read-only MVP). */
+export function buildAllTools(client: MeritClient): ToolRecord {
+  return {
+    ...createCustomerTools(client),
+    ...createVendorTools(client),
+    ...createSalesInvoiceTools(client),
+    ...createAccountTools(client),
+    ...createPaymentTools(client),
+    ...createTaxTools(client),
+  };
 }
 
 export function registerMcpToolHandlers(
