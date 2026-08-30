@@ -3,8 +3,10 @@ import { z } from "zod";
 import type { MeritClient } from "../client.js";
 import type { MeritItem, MeritItemGroup } from "../types/merit.js";
 import {
+  guidString,
   optionalGuid,
   optionalInt,
+  optionalNumber,
   optionalString,
   parseToolArgs,
 } from "../validation/tool-args.js";
@@ -65,5 +67,143 @@ export function createItemTools(client: MeritClient) {
         return jsonToolResult(response);
       },
     },
+
+    merit_create_items: {
+      description:
+        "Create Merit Aktiva items (POST /api/v2/senditems). Each item needs type (1 stock, 2 " +
+        "service, 3 item), usage (1 sales, 2 purchases, 3 both), code, and description. " +
+        "uomName is required for stock items. Returns [{ ItemId, Code }].",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          items: {
+            type: "array",
+            description: "Items to create (required)",
+            items: { type: "object" },
+          },
+        },
+        required: ["items"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(createItemsSchema, params);
+        const response = await client.post<unknown>("/api/v2/senditems", {
+          Items: args.items.map((item) => ({
+            Type: item.type,
+            Usage: item.usage,
+            Code: item.code,
+            Description: item.description,
+            UOMName: item.uomName,
+            EANCode: item.eanCode,
+            TaxId: item.taxId,
+            ItemGrCode: item.itemGrCode,
+            SalesAccCode: item.salesAccCode,
+            PurchaseAccCode: item.purchaseAccCode,
+          })),
+        });
+        return jsonToolResult(response);
+      },
+    },
+
+    merit_update_item: {
+      description:
+        "Update a Merit Aktiva item (POST /api/v1/updateitem). id is required; other fields are " +
+        "optional patches.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          id: { type: "string", description: "Item GUID (required)" },
+          code: { type: "string" },
+          description: { type: "string" },
+          salesPrice: { type: "number" },
+          itemGrCode: { type: "string" },
+          discountPct: { type: "number" },
+          eanCode: { type: "string" },
+          taxId: { type: "string" },
+        },
+        required: ["id"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(updateItemSchema, params);
+        const response = await client.post<unknown>("/api/v1/updateitem", {
+          Id: args.id,
+          Code: args.code,
+          Description: args.description,
+          SalesPrice: args.salesPrice,
+          ItemGrCode: args.itemGrCode,
+          DiscountPct: args.discountPct,
+          EANCode: args.eanCode,
+          TaxId: args.taxId,
+        });
+        return jsonToolResult(response);
+      },
+    },
+
+    merit_create_item_groups: {
+      description:
+        "Create Merit Aktiva item groups (POST /api/v2/senditemgroups). Each group needs code " +
+        "and name.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          itemGroups: {
+            type: "array",
+            description: "Groups to create (required)",
+            items: { type: "object" },
+          },
+        },
+        required: ["itemGroups"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(createItemGroupsSchema, params);
+        const response = await client.post<unknown>("/api/v2/senditemgroups", {
+          ItemGroups: args.itemGroups.map((group) => ({
+            Code: group.code,
+            Name: group.name,
+          })),
+        });
+        return jsonToolResult(response);
+      },
+    },
   };
 }
+
+const createItemsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        type: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+        usage: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+        code: z.string().min(1).max(20),
+        description: z.string().min(1).max(100),
+        uomName: optionalString,
+        eanCode: optionalString,
+        taxId: optionalGuid,
+        itemGrCode: optionalString,
+        salesAccCode: optionalString,
+        purchaseAccCode: optionalString,
+      }),
+    )
+    .min(1),
+});
+
+const updateItemSchema = z.object({
+  id: guidString,
+  code: optionalString,
+  description: optionalString,
+  salesPrice: optionalNumber,
+  itemGrCode: optionalString,
+  discountPct: optionalNumber,
+  eanCode: optionalString,
+  taxId: optionalGuid,
+});
+
+const createItemGroupsSchema = z.object({
+  itemGroups: z
+    .array(
+      z.object({
+        code: z.string().min(1),
+        name: z.string().min(1),
+      }),
+    )
+    .min(1),
+});

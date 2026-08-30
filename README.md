@@ -6,7 +6,8 @@ Open-source [Model Context Protocol](https://modelcontextprotocol.io/) server fo
 
 Runs as a stdio MCP server. All tool names are prefixed `merit_`.
 
-> Status: read tools (MVP + remaining domains). Write tools land in a follow-up commit.
+> Status: read + write tools for the core accounting surface. Extended domains (offers,
+> recurring, inventory movements, e-invoice send) are a later milestone issue.
 > Full documentation lands with the milestone's docs issue.
 
 ## Quick start
@@ -82,6 +83,25 @@ Each tool `POST`s to the Merit API with signed query auth:
 - `merit_get_inventory_report` — `/api/v2/getinventoryreport`
 - `merit_get_sales_report` — `/api/v2/getsalesrep`
 - `merit_get_purchase_report` — `/api/v2/getpurchrep`
+- `merit_create_customer` — `/api/v2/sendcustomer`
+- `merit_update_customer` — `/api/v1/updatecustomer`
+- `merit_list_customer_groups` — `/api/v2/getcustomergroups`
+- `merit_create_customer_group` — `/api/v2/sendcustomergroup`
+- `merit_create_vendor` — `/api/v2/sendvendor`
+- `merit_update_vendor` — `/api/v2/updatevendor`
+- `merit_list_vendor_groups` — `/api/v2/getvendorgroups`
+- `merit_create_vendor_group` — `/api/v2/sendvendorgroup`
+- `merit_create_sales_invoice` — `/api/v2/sendinvoice` (no update; delete-and-recreate)
+- `merit_delete_sales_invoice` — `/api/v1/deleteinvoice` (destructive)
+- `merit_create_purchase_invoice` — `/api/v2/sendpurchinvoice` (books immediately)
+- `merit_delete_purchase_invoice` — `/api/v1/deletepurchinvoice` (destructive)
+- `merit_create_sales_invoice_payment` — `/api/v2/sendpayment`
+- `merit_create_purchase_invoice_payment` — `/api/v2/sendPaymentV`
+- `merit_delete_payment` — `/api/v1/deletepayment` (destructive)
+- `merit_create_gl_batch` — `/api/v1/sendglbatch`
+- `merit_create_items` — `/api/v2/senditems`
+- `merit_update_item` — `/api/v1/updateitem`
+- `merit_create_item_groups` — `/api/v2/senditemgroups`
 
 Date arguments accept ISO `YYYY-MM-DD` and are converted to Merit's `yyyymmdd` wire
 format. Period filters (`periodStart`/`periodEnd`) are capped by Merit at 3 months.

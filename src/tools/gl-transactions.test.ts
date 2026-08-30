@@ -96,6 +96,33 @@ describe("GL transaction read tools", () => {
     expect(client.post).not.toHaveBeenCalled();
   });
 
+  it("creates a GL batch", async () => {
+    vi.mocked(client.post).mockResolvedValue({});
+    await tools.merit_create_gl_batch.handler({
+      docNo: "MEMO-MCP",
+      batchDate: "2026-08-30",
+      entryRows: [
+        { accountCode: "1910", debit: 10, memo: "test" },
+        { accountCode: "5610", credit: 10, memo: "test" },
+      ],
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v1/sendglbatch", {
+      DocNo: "MEMO-MCP",
+      BatchDate: "20260830",
+      CurrencyCode: undefined,
+      EntryRow: [
+        expect.objectContaining({ AccountCode: "1910", Debit: 10, Memo: "test" }),
+        expect.objectContaining({ AccountCode: "5610", Credit: 10 }),
+      ],
+    });
+  });
+
+  it("rejects empty GL entry rows", async () => {
+    await expect(
+      tools.merit_create_gl_batch.handler({ docNo: "X", batchDate: "2026-08-30", entryRows: [] }),
+    ).rejects.toThrow();
+  });
+
   it("propagates API errors", async () => {
     vi.mocked(client.post).mockRejectedValue(new Error("gl fail"));
     await expect(

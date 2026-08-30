@@ -42,6 +42,50 @@ describe("item read tools", () => {
     await expect(tools.merit_list_items.handler({ id: "nope" })).rejects.toThrow(/id/);
   });
 
+  it("creates and updates items and item groups", async () => {
+    vi.mocked(client.post).mockResolvedValue([{ ItemId: "dddddddd-eeee-4fff-8000-111111111111" }]);
+    await tools.merit_create_items.handler({
+      items: [{ type: 2, usage: 3, code: "MCP1", description: "Test service" }],
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/senditems", {
+      Items: [
+        expect.objectContaining({ Type: 2, Usage: 3, Code: "MCP1", Description: "Test service" }),
+      ],
+    });
+
+    await tools.merit_update_item.handler({
+      id: "dddddddd-eeee-4fff-8000-111111111111",
+      description: "Updated",
+      salesPrice: 10,
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v1/updateitem", {
+      Id: "dddddddd-eeee-4fff-8000-111111111111",
+      Code: undefined,
+      Description: "Updated",
+      SalesPrice: 10,
+      ItemGrCode: undefined,
+      DiscountPct: undefined,
+      EANCode: undefined,
+      TaxId: undefined,
+    });
+
+    await tools.merit_create_item_groups.handler({
+      itemGroups: [{ code: "MCPG", name: "MCP group" }],
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/senditemgroups", {
+      ItemGroups: [{ Code: "MCPG", Name: "MCP group" }],
+    });
+  });
+
+  it("rejects invalid item type", async () => {
+    await expect(
+      tools.merit_create_items.handler({
+        items: [{ type: 9, usage: 1, code: "X", description: "Y" }],
+      }),
+    ).rejects.toThrow(/type/);
+    await expect(tools.merit_update_item.handler({})).rejects.toThrow(/id/);
+  });
+
   it("propagates API errors", async () => {
     vi.mocked(client.post).mockRejectedValue(new Error("items fail"));
     await expect(tools.merit_list_item_groups.handler({})).rejects.toThrow("items fail");

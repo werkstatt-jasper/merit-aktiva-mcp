@@ -94,7 +94,10 @@ describe("report tools", () => {
       WithReservations: undefined,
     });
 
-    await tools.merit_get_inventory_report.handler({ reportDate: "2026-08-30", articleGroups: null });
+    await tools.merit_get_inventory_report.handler({
+      reportDate: "2026-08-30",
+      articleGroups: null,
+    });
     expect(client.post).toHaveBeenLastCalledWith(
       "/api/v2/getinventoryreport",
       expect.objectContaining({ ArticleGroups: undefined }),

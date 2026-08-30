@@ -88,6 +88,41 @@ describe("purchase invoice read tools", () => {
     ).rejects.toThrow(/dateFilter/);
   });
 
+  it("creates and deletes a purchase invoice", async () => {
+    vi.mocked(client.post).mockResolvedValue({ BillId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee" });
+    const taxId = "aa11bb22-cc33-4d44-9e55-ff6677889900";
+    await tools.merit_create_purchase_invoice.handler({
+      vendor: { name: "Tarnija", vatAccountable: true, countryCode: "EE" },
+      billNo: "PI-MCP-1",
+      docDate: "2026-08-30",
+      invoiceRows: [
+        { item: { code: "TEENUS", description: "Consult" }, quantity: 1, price: 80, taxId },
+      ],
+      taxAmount: [{ taxId, amount: 17.6 }],
+      totalAmount: 80,
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/api/v2/sendpurchinvoice",
+      expect.objectContaining({
+        BillNo: "PI-MCP-1",
+        DocDate: "20260830",
+        TotalAmount: 80,
+      }),
+    );
+
+    await tools.merit_delete_purchase_invoice.handler({
+      id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v1/deletepurchinvoice", {
+      Id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+    });
+    expect(tools.merit_delete_purchase_invoice.description).toMatch(/^DESTRUCTIVE/);
+  });
+
+  it("rejects create without required fields", async () => {
+    await expect(tools.merit_create_purchase_invoice.handler({})).rejects.toThrow();
+  });
+
   it("propagates API errors", async () => {
     vi.mocked(client.post).mockRejectedValue(new Error("boom"));
     await expect(

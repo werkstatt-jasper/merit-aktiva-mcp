@@ -11,10 +11,22 @@ import {
   optionalBoolean,
   optionalDateType,
   optionalInt,
+  optionalMeritDate,
+  optionalNumber,
   optionalPurchaseOrderDateFilter,
+  optionalString,
   parseToolArgs,
   requiredMeritDate,
+  requiredNumber,
 } from "../validation/tool-args.js";
+import {
+  invoiceRowSchema,
+  partySchema,
+  taxAmountRowSchema,
+  toWireInvoiceRow,
+  toWireParty,
+  toWireTaxAmount,
+} from "./invoice-payload.js";
 import { jsonToolResult } from "./list-response.js";
 
 const listPurchaseInvoicesSchema = z.object({
@@ -134,5 +146,104 @@ export function createPurchaseInvoiceTools(client: MeritClient) {
         return jsonToolResult(response);
       },
     },
+
+    merit_create_purchase_invoice: {
+      description:
+        "Create a booked Merit Aktiva purchase invoice (POST /api/v2/sendpurchinvoice). Creates " +
+        "the document and GL entry immediately — bypasses the approval flow (use sendpurchorder " +
+        "for that; not in this package yet). vendor is existing Id or new record. " +
+        "invoiceRows, taxAmount[], and totalAmount (ex-VAT) are required.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          vendor: {
+            type: "object",
+            description: "Vendor object (id of existing, or name+countryCode+vatAccountable)",
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              vatAccountable: { type: "boolean" },
+              countryCode: { type: "string" },
+              regNo: { type: "string" },
+              vatRegNo: { type: "string" },
+              email: { type: "string" },
+              address: { type: "string" },
+              city: { type: "string" },
+              currencyCode: { type: "string" },
+            },
+          },
+          billNo: { type: "string", description: "Vendor bill number, max 35 (required)" },
+          docDate: { type: "string", description: "Document date YYYY-MM-DD (required)" },
+          dueDate: { type: "string" },
+          transactionDate: { type: "string" },
+          refNo: { type: "string" },
+          currencyCode: { type: "string" },
+          invoiceRows: { type: "array", items: { type: "object" } },
+          taxAmount: { type: "array", items: { type: "object" } },
+          totalAmount: { type: "number", description: "Amount without VAT (required)" },
+          roundingAmount: { type: "number" },
+          hComment: { type: "string" },
+          fComment: { type: "string" },
+        },
+        required: ["vendor", "billNo", "docDate", "invoiceRows", "taxAmount", "totalAmount"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(createPurchaseInvoiceSchema, params);
+        const response = await client.post<unknown>("/api/v2/sendpurchinvoice", {
+          Vendor: toWireParty(args.vendor),
+          BillNo: args.billNo,
+          DocDate: args.docDate,
+          DueDate: args.dueDate,
+          TransactionDate: args.transactionDate,
+          RefNo: args.refNo,
+          CurrencyCode: args.currencyCode,
+          InvoiceRow: args.invoiceRows.map(toWireInvoiceRow),
+          TaxAmount: args.taxAmount.map(toWireTaxAmount),
+          TotalAmount: args.totalAmount,
+          RoundingAmount: args.roundingAmount,
+          HComment: args.hComment,
+          FComment: args.fComment,
+        });
+        return jsonToolResult(response);
+      },
+    },
+
+    merit_delete_purchase_invoice: {
+      description:
+        "DESTRUCTIVE: delete a Merit Aktiva purchase invoice (POST /api/v1/deletepurchinvoice). " +
+        "id is the purchase invoice GUID (PIHId). There is no undo.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          id: { type: "string", description: "Purchase invoice GUID / PIHId (required)" },
+        },
+        required: ["id"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(deleteByIdSchema, params);
+        const response = await client.post<unknown>("/api/v1/deletepurchinvoice", { Id: args.id });
+        return jsonToolResult(response);
+      },
+    },
   };
 }
+
+const createPurchaseInvoiceSchema = z.object({
+  vendor: partySchema,
+  billNo: z.string().min(1).max(35),
+  docDate: requiredMeritDate,
+  dueDate: optionalMeritDate,
+  transactionDate: optionalMeritDate,
+  refNo: optionalString,
+  currencyCode: optionalString,
+  invoiceRows: z.array(invoiceRowSchema).min(1),
+  taxAmount: z.array(taxAmountRowSchema).min(1),
+  totalAmount: requiredNumber,
+  roundingAmount: optionalNumber,
+  hComment: optionalString,
+  fComment: optionalString,
+});
+
+const deleteByIdSchema = z.object({
+  id: guidString,
+});

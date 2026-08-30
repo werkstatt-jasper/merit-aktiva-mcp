@@ -6,6 +6,9 @@ import {
   guidString,
   optionalBoolean,
   optionalDateType,
+  optionalGuid,
+  optionalNumber,
+  optionalString,
   parseToolArgs,
   requiredMeritDate,
 } from "../validation/tool-args.js";
@@ -124,5 +127,66 @@ export function createGlTransactionTools(client: MeritClient) {
         return jsonToolResult(response);
       },
     },
+
+    merit_create_gl_batch: {
+      description:
+        "Create a Merit Aktiva general-ledger batch (POST /api/v1/sendglbatch). entryRows need " +
+        "accountCode plus debit and/or credit. batchDate is ISO YYYY-MM-DD.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          docNo: { type: "string", description: "Document number, max 35 (required)" },
+          batchDate: { type: "string", description: "Batch date YYYY-MM-DD (required)" },
+          currencyCode: { type: "string" },
+          entryRows: {
+            type: "array",
+            description: "GL lines (required)",
+            items: { type: "object" },
+          },
+        },
+        required: ["docNo", "batchDate", "entryRows"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(createGlBatchSchema, params);
+        const response = await client.post<unknown>("/api/v1/sendglbatch", {
+          DocNo: args.docNo,
+          BatchDate: args.batchDate,
+          CurrencyCode: args.currencyCode,
+          EntryRow: args.entryRows.map((row) => ({
+            AccountCode: row.accountCode,
+            DepartmentCode: row.departmentCode,
+            Debit: row.debit,
+            Credit: row.credit,
+            ProjectCode: row.projectCode,
+            CostCenterCode: row.costCenterCode,
+            Memo: row.memo,
+            TaxId: row.taxId,
+            VatAmount: row.vatAmount,
+          })),
+        });
+        return jsonToolResult(response);
+      },
+    },
   };
 }
+
+const createGlBatchSchema = z.object({
+  docNo: z.string().min(1).max(35),
+  batchDate: requiredMeritDate,
+  currencyCode: optionalString,
+  entryRows: z
+    .array(
+      z.object({
+        accountCode: z.string().min(1),
+        departmentCode: optionalString,
+        debit: optionalNumber,
+        credit: optionalNumber,
+        projectCode: optionalString,
+        costCenterCode: optionalString,
+        memo: optionalString,
+        taxId: optionalGuid,
+        vatAmount: optionalNumber,
+      }),
+    )
+    .min(1),
+});

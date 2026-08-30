@@ -119,6 +119,61 @@ describe("merit_get_sales_invoice", () => {
     expect(client.post).not.toHaveBeenCalled();
   });
 
+  it("creates a sales invoice with nested wire fields", async () => {
+    vi.mocked(client.post).mockResolvedValue({ InvoiceNo: "MCP-1" });
+    const taxId = "aa11bb22-cc33-4d44-9e55-ff6677889900";
+    await tools.merit_create_sales_invoice.handler({
+      customer: { name: "Näidis", notTDCustomer: true, countryCode: "EE" },
+      invoiceNo: "MCP-1",
+      docDate: "2026-08-30",
+      dueDate: "2026-09-13",
+      invoiceRows: [
+        {
+          item: { code: "TEENUS", description: "Consult" },
+          quantity: 1,
+          price: 100,
+          taxId,
+        },
+      ],
+      taxAmount: [{ taxId, amount: 22 }],
+      totalAmount: 100,
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/api/v2/sendinvoice",
+      expect.objectContaining({
+        InvoiceNo: "MCP-1",
+        DocDate: "20260830",
+        DueDate: "20260913",
+        TotalAmount: 100,
+        InvoiceRow: [
+          expect.objectContaining({
+            Item: expect.objectContaining({ Code: "TEENUS" }),
+            Quantity: 1,
+            Price: 100,
+            TaxId: taxId,
+          }),
+        ],
+        TaxAmount: [{ TaxId: taxId, Amount: 22 }],
+      }),
+    );
+  });
+
+  it("deletes a sales invoice", async () => {
+    vi.mocked(client.post).mockResolvedValue({});
+    await tools.merit_delete_sales_invoice.handler({
+      id: "9e8d7c6b-5a49-4838-a726-150493827160",
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v1/deleteinvoice", {
+      Id: "9e8d7c6b-5a49-4838-a726-150493827160",
+    });
+    expect(tools.merit_delete_sales_invoice.description).toMatch(/^DESTRUCTIVE/);
+  });
+
+  it("rejects create without required nested fields", async () => {
+    await expect(tools.merit_create_sales_invoice.handler({ invoiceNo: "1" })).rejects.toThrow();
+    await expect(tools.merit_delete_sales_invoice.handler({})).rejects.toThrow(/id/);
+  });
+
   it("propagates API errors", async () => {
     vi.mocked(client.post).mockRejectedValue(new Error("boom"));
     await expect(

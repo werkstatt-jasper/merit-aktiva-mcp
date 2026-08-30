@@ -62,6 +62,65 @@ describe("merit_list_customers", () => {
     expect(client.post).not.toHaveBeenCalled();
   });
 
+  it("creates and updates customers and groups", async () => {
+    vi.mocked(client.post).mockResolvedValue({
+      Id: "3a274294-9c60-4a3d-93f0-1874253f073e",
+      Name: "X",
+    });
+    await tools.merit_create_customer.handler({
+      name: "MCP Test Customer",
+      notTDCustomer: true,
+      countryCode: "EE",
+      email: "test@example.com",
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/api/v2/sendcustomer",
+      expect.objectContaining({
+        Name: "MCP Test Customer",
+        NotTDCustomer: true,
+        CountryCode: "EE",
+        Email: "test@example.com",
+      }),
+    );
+
+    await tools.merit_update_customer.handler({
+      id: "3a274294-9c60-4a3d-93f0-1874253f073e",
+      email: "new@example.com",
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/api/v1/updatecustomer",
+      expect.objectContaining({
+        Id: "3a274294-9c60-4a3d-93f0-1874253f073e",
+        Email: "new@example.com",
+      }),
+    );
+
+    vi.mocked(client.post).mockResolvedValue([]);
+    await tools.merit_list_customer_groups.handler({});
+    expect(client.post).toHaveBeenCalledWith("/api/v2/getcustomergroups", {});
+
+    await tools.merit_create_customer_group.handler({
+      id: "3a274294-9c60-4a3d-93f0-1874253f073e",
+      name: "VIP",
+      code: "VIP",
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/sendcustomergroup", {
+      Id: "3a274294-9c60-4a3d-93f0-1874253f073e",
+      Name: "VIP",
+      Code: "VIP",
+    });
+  });
+
+  it("rejects create/update without required fields", async () => {
+    await expect(tools.merit_create_customer.handler({ name: "X" })).rejects.toThrow(
+      /notTDCustomer/,
+    );
+    await expect(tools.merit_update_customer.handler({})).rejects.toThrow(/id/);
+    await expect(
+      tools.merit_create_customer_group.handler({ name: "X", code: "Y" }),
+    ).rejects.toThrow(/id/);
+  });
+
   it("propagates MeritApiError", async () => {
     vi.mocked(client.post).mockRejectedValue(
       new MeritApiError({

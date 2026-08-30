@@ -70,3 +70,70 @@ describe("merit_list_payment_types", () => {
     expect(client.post).not.toHaveBeenCalled();
   });
 });
+
+describe("payment write tools", () => {
+  let client: MeritClient;
+  let tools: ReturnType<typeof createPaymentTools>;
+
+  beforeEach(() => {
+    client = createMockClient();
+    tools = createPaymentTools(client);
+  });
+
+  it("creates a sales invoice payment with yyyymmdd date", async () => {
+    vi.mocked(client.post).mockResolvedValue({});
+    await tools.merit_create_sales_invoice_payment.handler({
+      customerName: "Näidis",
+      invoiceNo: "MCP-1",
+      paymentDate: "2026-08-30",
+      amount: 122,
+      iban: "EE11",
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/sendpayment", {
+      CustomerName: "Näidis",
+      InvoiceNo: "MCP-1",
+      PaymentDate: "20260830",
+      Amount: 122,
+      BankId: undefined,
+      IBAN: "EE11",
+      RefNo: undefined,
+      CurrencyCode: undefined,
+    });
+  });
+
+  it("creates a purchase payment with yyyyMMddHHmm date", async () => {
+    vi.mocked(client.post).mockResolvedValue({});
+    await tools.merit_create_purchase_invoice_payment.handler({
+      vendorName: "Tarnija",
+      billNo: "PI-1",
+      paymentDate: "2026-08-30T14:05",
+      amount: 50,
+    });
+    expect(client.post).toHaveBeenCalledWith("/api/v2/sendPaymentV", {
+      VendorName: "Tarnija",
+      BillNo: "PI-1",
+      PaymentDate: "202608301405",
+      Amount: 50,
+      BankId: undefined,
+      IBAN: undefined,
+      RefNo: undefined,
+      CurrencyCode: undefined,
+    });
+  });
+
+  it("deletes a payment", async () => {
+    vi.mocked(client.post).mockResolvedValue({});
+    await tools.merit_delete_payment.handler({ id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee" });
+    expect(client.post).toHaveBeenCalledWith("/api/v1/deletepayment", {
+      Id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+    });
+    expect(tools.merit_delete_payment.description).toMatch(/^DESTRUCTIVE/);
+  });
+
+  it("rejects missing required payment fields", async () => {
+    await expect(tools.merit_create_sales_invoice_payment.handler({})).rejects.toThrow(
+      /customerName/,
+    );
+    await expect(tools.merit_delete_payment.handler({ id: "x" })).rejects.toThrow(/GUID/);
+  });
+});
