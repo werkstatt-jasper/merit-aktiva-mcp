@@ -123,7 +123,7 @@ Prefer to run it yourself over **stdio**? See [Prerequisites](#prerequisites) an
 
 | Tool | Description |
 |------|-------------|
-| `merit_list_taxes` | List all Merit Aktiva tax (VAT) rates (POST /api/v1/gettaxes). |
+| `merit_list_taxes` | List Merit Aktiva tax (VAT) rates (POST /api/v1/gettaxes). |
 
 </details>
 

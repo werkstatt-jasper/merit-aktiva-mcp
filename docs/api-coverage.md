@@ -143,3 +143,6 @@ Conflicts where the official manual (or live TestApi) differs from the roosa-dev
 | `sendPaymentV` / `sendPaymentO` `PaymentDate` | `yyyymmdd` | official `yyyyMMddHHmm` |
 | Recurring list period | 3-month list cap | period = next-invoice date, **max 180 days**; `DateType` 0 = next date, 1 = changed |
 | E-invoice send | not in seed table | `/api/v2/sendinvoiceaseinv`; incapable receiver → `api-noeinv` |
+| Account inactive flag | `NoActive` | manual now says `NonActive` (2026-11); both are accepted, raw field kept, `IsActive` added |
+| `gettaxes` filter | no filters | optional `NonActive` 0 = all, 1 = active only, 2 = inactive only (`activeFilter`); omitted sends `{}` |
+| Tax field sizes | `Name` Str 40, `TaxPct` Decimal 2.2 | `Name`/`NameEN`/`NameRU` Str 50, `TaxPct` Decimal 3.2; responses are passed through without length or range checks |
