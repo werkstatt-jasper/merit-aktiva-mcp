@@ -16,5 +16,23 @@
       "TaxName": "22%",
       "IsParent": false
     }
+  ],
+  "nonActiveList": [
+    {
+      "AccountID": "c0ffee00-1234-4abc-9def-001122334457",
+      "NonActive": false,
+      "Code": "9001",
+      "Name": "Example active account",
+      "TaxName": "",
+      "IsParent": false
+    },
+    {
+      "AccountID": "c0ffee00-1234-4abc-9def-001122334458",
+      "NonActive": true,
+      "Code": "9002",
+      "Name": "Example inactive account",
+      "TaxName": "",
+      "IsParent": false
+    }
   ]
 }

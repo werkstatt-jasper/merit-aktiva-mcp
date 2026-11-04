@@ -67,7 +67,15 @@ export interface MeritAccount {
   Code?: string;
   Name?: string;
   TaxName?: string;
+  /** Inactive flag as originally documented for `getaccounts`. */
   NoActive?: boolean;
+  /** Inactive flag as named in the current reference manual (2026-11). */
+  NonActive?: boolean;
+  /**
+   * Added by `merit_list_accounts`: `true` unless `NonActive` / `NoActive` is `true`.
+   * Only present when the API returned one of those flags.
+   */
+  IsActive?: boolean;
   IsParent?: boolean;
   [key: string]: unknown;
 }
@@ -97,9 +105,15 @@ export interface MeritPaymentType {
 export interface MeritTax {
   Id?: string;
   Code?: string;
+  /** Up to 50 characters (widened from 40 in the reference manual); not length-checked here. */
   Name?: string;
   NameEN?: string;
+  NameRU?: string;
+  /** Decimal 3.2 per the reference manual, so values of 100 or more are possible. */
   TaxPct?: number;
+  NonActive?: boolean;
+  CountryId?: number;
+  CountryCode?: string;
   [key: string]: unknown;
 }
 

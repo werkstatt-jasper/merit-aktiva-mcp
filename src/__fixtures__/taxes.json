@@ -14,5 +14,26 @@
       "NameEN": "0% turnover",
       "TaxPct": 0.0
     }
+  ],
+  "widenedList": [
+    {
+      "Id": "aa11bb22-cc33-4d44-9e55-ff6677889902",
+      "Code": "EXAMPLE-WIDE",
+      "Name": "Example tax rate with a name longer than forty chars",
+      "NameEN": "Example tax rate with a name longer than forty chars",
+      "NameRU": "Example tax rate with a name longer than forty chars",
+      "TaxPct": 125.5,
+      "NonActive": false,
+      "CountryId": 0
+    },
+    {
+      "Id": "aa11bb22-cc33-4d44-9e55-ff6677889903",
+      "Code": "EXAMPLE-OLD",
+      "Name": "Example inactive rate",
+      "NameEN": "Example inactive rate",
+      "TaxPct": 9.0,
+      "NonActive": true,
+      "CountryId": 0
+    }
   ]
 }
