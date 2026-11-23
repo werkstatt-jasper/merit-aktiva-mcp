@@ -70,6 +70,7 @@ deferred list recorded on [#224](https://gitlab.com/werkstatt.ee/e-financials-mc
 | `POST` | `/api/v2/getpurchorder` | `merit_get_purchase_invoice` |
 | `POST` | `/api/v2/GetPOrders` | `merit_list_purchase_orders` |
 | `POST` | `/api/v2/sendpurchinvoice` | `merit_create_purchase_invoice` |
+| `POST` | `/api/v2/sendpurchorder` | `merit_submit_purchase_invoice_for_approval` |
 | `POST` | `/api/v1/deletepurchinvoice` | `merit_delete_purchase_invoice` |
 | `POST` | `/api/v1/getaccounts` | `merit_list_accounts` |
 | `POST` | `/api/v1/getglbatches` | `merit_list_gl_batches` |
@@ -138,6 +139,8 @@ Conflicts where the official manual (or live TestApi) differs from the roosa-dev
 | Fixed-asset send | conventional spellings | official `InventaryNo`, `FAFroupName`, `SubsidAmount` |
 | Customer payments report currency | `CurrencyCode` | official typo `CurrncyCode` |
 | `GetPOrders` | generic “purchase invoices” | purchase **orders waiting approval** |
+| `sendpurchorder` | not in seed | “Create Purchase Invoice Waiting Approval”: same payload as `sendpurchinvoice`, lands in Kinnitamata ostuarved, nothing booked; no documented confirm API (confirm in the Merit UI). v2 documents no `TransactionDate`, so the approval tool does not take one |
+| Purchase-invoice attachment | not in seed | `Attachment` `{FileName, FileContent}` = PDF as base64; Merit validates it, so the tools check base64, `%PDF-` and `%%EOF` before sending |
 | Sales invoice update | (none in seed) | **cannot update** — delete and recreate; credit = negative qty / `totalAmount` |
 | Signing body | docs show pretty-printed JSON | compact `JSON.stringify` is the vector that matches the official example |
 | `sendPaymentV` / `sendPaymentO` `PaymentDate` | `yyyymmdd` | official `yyyyMMddHHmm` |

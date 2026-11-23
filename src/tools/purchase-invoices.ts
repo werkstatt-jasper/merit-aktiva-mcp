@@ -11,23 +11,110 @@ import {
   optionalBoolean,
   optionalDateType,
   optionalInt,
-  optionalMeritDate,
-  optionalNumber,
   optionalPurchaseOrderDateFilter,
-  optionalString,
   parseToolArgs,
   requiredMeritDate,
-  requiredNumber,
 } from "../validation/tool-args.js";
-import {
-  invoiceRowSchema,
-  partySchema,
-  taxAmountRowSchema,
-  toWireInvoiceRow,
-  toWireParty,
-  toWireTaxAmount,
-} from "./invoice-payload.js";
 import { jsonToolResult } from "./list-response.js";
+import {
+  createPurchaseInvoiceSchema,
+  type PurchaseInvoiceBaseArgs,
+  purchaseInvoiceBaseSchema,
+  purchaseInvoiceInputProperties,
+  purchaseInvoiceRequired,
+  toWirePurchaseInvoice,
+} from "./purchase-invoice-payload.js";
+
+/** Status line returned by merit_submit_purchase_invoice_for_approval. */
+export const SUBMITTED_FOR_APPROVAL_STATUS =
+  "Sent to Merit's unconfirmed purchase invoices (Kinnitamata ostuarved). Not booked yet: " +
+  "a bookkeeper must confirm it in Merit.";
+
+/** Days before and after docDate searched by the duplicate guard. */
+export const DUPLICATE_WINDOW_DAYS = 30;
+
+interface MeritPurchaseCreateResult {
+  BillId?: string;
+  BillNo?: string;
+  VendorId?: string;
+  RefNo?: string;
+  [key: string]: unknown;
+}
+
+/** Shift a Merit `yyyymmdd` date by whole days (UTC, no DST issues). */
+export function shiftMeritDate(meritDate: string, days: number): string {
+  const date = new Date(
+    Date.UTC(
+      Number(meritDate.slice(0, 4)),
+      Number(meritDate.slice(4, 6)) - 1,
+      Number(meritDate.slice(6, 8)) + days,
+    ),
+  );
+  return date.toISOString().slice(0, 10).replace(/-/g, "");
+}
+
+function normalize(value: unknown): string {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ").toLowerCase() : "";
+}
+
+/**
+ * Same vendor if the vendor GUID matches, or the vendor name matches (case-insensitive).
+ * A vendor given with neither id nor name matches on billNo alone.
+ */
+function isSameVendor(vendor: PurchaseInvoiceBaseArgs["vendor"], row: Record<string, unknown>) {
+  if (!vendor.id && !vendor.name) return true;
+  if (vendor.id && normalize(row.VendorId) === normalize(vendor.id)) return true;
+  const name = normalize(vendor.name);
+  return (
+    name !== "" && (normalize(row.VendorName) === name || normalize(row.ExpVendorName) === name)
+  );
+}
+
+function describeMatch(kind: string, row: Record<string, unknown>): string {
+  const vendor = row.VendorName ?? row.ExpVendorName ?? row.VendorId ?? "unknown vendor";
+  const date = row.DocumentDate ? `, document date ${String(row.DocumentDate).slice(0, 10)}` : "";
+  return `${kind} (PIHId ${row.PIHId}, BillNo ${row.BillNo}, vendor ${vendor}${date})`;
+}
+
+/**
+ * Duplicate guard for merit_submit_purchase_invoice_for_approval. Looks for the same vendor and
+ * billNo among unconfirmed purchase invoices (GetPOrders, by document date) and booked purchase
+ * invoices (getpurchorders, by document date) within DUPLICATE_WINDOW_DAYS of docDate.
+ * Returns a description of the first match, or undefined. API errors propagate (fail closed).
+ */
+export async function findExistingPurchaseDocument(
+  client: MeritClient,
+  args: PurchaseInvoiceBaseArgs,
+): Promise<string | undefined> {
+  const periodStart = shiftMeritDate(args.docDate, -DUPLICATE_WINDOW_DAYS);
+  const periodEnd = shiftMeritDate(args.docDate, DUPLICATE_WINDOW_DAYS);
+  const [unconfirmed, booked] = await Promise.all([
+    client.post<MeritPurchaseOrderListItem[]>("/api/v2/GetPOrders", {
+      PeriodStart: periodStart,
+      PeriodEnd: periodEnd,
+      DateFilter: 1,
+      StatusFilter: 0,
+      WithAttachments: false,
+    }),
+    client.post<MeritPurchaseInvoiceListItem[]>("/api/v2/getpurchorders", {
+      PeriodStart: periodStart,
+      PeriodEnd: periodEnd,
+      DateType: 0,
+    }),
+  ]);
+  const billNo = normalize(args.billNo);
+  const matches = (row: Record<string, unknown>) =>
+    normalize(row.BillNo) === billNo && isSameVendor(args.vendor, row);
+  const pending = (Array.isArray(unconfirmed) ? unconfirmed : []).find(matches);
+  if (pending) {
+    return describeMatch(
+      "an unconfirmed purchase invoice waiting for approval (Kinnitamata ostuarved)",
+      pending,
+    );
+  }
+  const done = (Array.isArray(booked) ? booked : []).find(matches);
+  return done ? describeMatch("a booked purchase invoice", done) : undefined;
+}
 
 const listPurchaseInvoicesSchema = z.object({
   periodStart: requiredMeritDate,
@@ -116,8 +203,10 @@ export function createPurchaseInvoiceTools(client: MeritClient) {
 
     merit_list_purchase_orders: {
       description:
-        "List Merit Aktiva purchase orders waiting approval (POST /api/v2/GetPOrders). " +
-        "Not the same as booked purchase invoices (getpurchorders). dateFilter: 0 = off, " +
+        "List Merit Aktiva purchase invoices waiting for confirmation (POST /api/v2/GetPOrders), " +
+        "including ones submitted with merit_submit_purchase_invoice_for_approval. Merit calls " +
+        "them purchase orders (Kinnitamata ostuarved). Not the same as booked purchase invoices " +
+        "(getpurchorders). dateFilter: 0 = off, " +
         "1 = document date, 2 = created date. statusFilter: 0 = off.",
       inputSchema: {
         type: "object" as const,
@@ -149,62 +238,63 @@ export function createPurchaseInvoiceTools(client: MeritClient) {
 
     merit_create_purchase_invoice: {
       description:
-        "Create a booked Merit Aktiva purchase invoice (POST /api/v2/sendpurchinvoice). Creates " +
-        "the document and GL entry immediately — bypasses the approval flow (use sendpurchorder " +
-        "for that; not in this package yet). vendor is existing Id or new record. " +
-        "invoiceRows, taxAmount[], and totalAmount (ex-VAT) are required.",
+        "Create a booked Merit Aktiva purchase invoice (POST /api/v2/sendpurchinvoice). Books " +
+        "immediately, with no review step. If the company wants a bookkeeper to review first, " +
+        "use merit_submit_purchase_invoice_for_approval. vendor is existing Id or new record. " +
+        "invoiceRows, taxAmount[], and totalAmount (ex-VAT) are required. Optional attachment " +
+        "is a PDF as base64.",
       inputSchema: {
         type: "object" as const,
         properties: {
-          vendor: {
-            type: "object",
-            description: "Vendor object (id of existing, or name+countryCode+vatAccountable)",
-            properties: {
-              id: { type: "string" },
-              name: { type: "string" },
-              vatAccountable: { type: "boolean" },
-              countryCode: { type: "string" },
-              regNo: { type: "string" },
-              vatRegNo: { type: "string" },
-              email: { type: "string" },
-              address: { type: "string" },
-              city: { type: "string" },
-              currencyCode: { type: "string" },
-            },
-          },
-          billNo: { type: "string", description: "Vendor bill number, max 35 (required)" },
-          docDate: { type: "string", description: "Document date YYYY-MM-DD (required)" },
-          dueDate: { type: "string" },
-          transactionDate: { type: "string" },
-          refNo: { type: "string" },
-          currencyCode: { type: "string" },
-          invoiceRows: { type: "array", items: { type: "object" } },
-          taxAmount: { type: "array", items: { type: "object" } },
-          totalAmount: { type: "number", description: "Amount without VAT (required)" },
-          roundingAmount: { type: "number" },
-          hComment: { type: "string" },
-          fComment: { type: "string" },
+          ...purchaseInvoiceInputProperties,
+          transactionDate: { type: "string", description: "Transaction date YYYY-MM-DD" },
         },
-        required: ["vendor", "billNo", "docDate", "invoiceRows", "taxAmount", "totalAmount"],
+        required: purchaseInvoiceRequired,
       },
       handler: async (params: unknown) => {
         const args = parseToolArgs(createPurchaseInvoiceSchema, params);
-        const response = await client.post<unknown>("/api/v2/sendpurchinvoice", {
-          Vendor: toWireParty(args.vendor),
-          BillNo: args.billNo,
-          DocDate: args.docDate,
-          DueDate: args.dueDate,
-          TransactionDate: args.transactionDate,
-          RefNo: args.refNo,
-          CurrencyCode: args.currencyCode,
-          InvoiceRow: args.invoiceRows.map(toWireInvoiceRow),
-          TaxAmount: args.taxAmount.map(toWireTaxAmount),
-          TotalAmount: args.totalAmount,
-          RoundingAmount: args.roundingAmount,
-          HComment: args.hComment,
-          FComment: args.fComment,
-        });
+        const response = await client.post<unknown>(
+          "/api/v2/sendpurchinvoice",
+          toWirePurchaseInvoice(args),
+        );
         return jsonToolResult(response);
+      },
+    },
+
+    merit_submit_purchase_invoice_for_approval: {
+      description:
+        "Submit a Merit Aktiva purchase invoice for approval (POST /api/v2/sendpurchorder). " +
+        "It goes to Merit's unconfirmed purchase invoices (Kinnitamata ostuarved) and is not " +
+        "booked: a bookkeeper must confirm it in Merit, which this API cannot do. Same fields " +
+        "as merit_create_purchase_invoice (no transactionDate). Refuses to submit when the " +
+        "same vendor and billNo already exist as an unconfirmed or booked purchase invoice " +
+        `within ${DUPLICATE_WINDOW_DAYS} days of docDate.`,
+      inputSchema: {
+        type: "object" as const,
+        properties: purchaseInvoiceInputProperties,
+        required: purchaseInvoiceRequired,
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(purchaseInvoiceBaseSchema, params);
+        const existing = await findExistingPurchaseDocument(client, args);
+        if (existing) {
+          throw new Error(
+            `Not submitted: vendor bill ${args.billNo} already exists in Merit as ${existing}. ` +
+              "Submitting it again would create a duplicate. Check the existing document with " +
+              "merit_get_purchase_invoice or merit_list_purchase_orders.",
+          );
+        }
+        const response = await client.post<MeritPurchaseCreateResult>(
+          "/api/v2/sendpurchorder",
+          toWirePurchaseInvoice(args),
+        );
+        return jsonToolResult({
+          BillId: response.BillId,
+          BillNo: response.BillNo,
+          VendorId: response.VendorId,
+          RefNo: response.RefNo,
+          Status: SUBMITTED_FOR_APPROVAL_STATUS,
+        });
       },
     },
 
@@ -227,22 +317,6 @@ export function createPurchaseInvoiceTools(client: MeritClient) {
     },
   };
 }
-
-const createPurchaseInvoiceSchema = z.object({
-  vendor: partySchema,
-  billNo: z.string().min(1).max(35),
-  docDate: requiredMeritDate,
-  dueDate: optionalMeritDate,
-  transactionDate: optionalMeritDate,
-  refNo: optionalString,
-  currencyCode: optionalString,
-  invoiceRows: z.array(invoiceRowSchema).min(1),
-  taxAmount: z.array(taxAmountRowSchema).min(1),
-  totalAmount: requiredNumber,
-  roundingAmount: optionalNumber,
-  hComment: optionalString,
-  fComment: optionalString,
-});
 
 const deleteByIdSchema = z.object({
   id: guidString,
