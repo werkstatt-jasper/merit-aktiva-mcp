@@ -11,7 +11,7 @@ docs win** on conflicts (see [quirks](#official-wins-quirks)).
 Merit has no public OpenAPI spec. This file is one row per shipped or explicitly
 deferred `POST` path, not a scrape of every HTML page.
 
-- **Covered:** 77 `merit_` tools (M1–M6)
+- **Covered:** 78 `merit_` tools (M1–M6)
 - **Deferred:** bank import / settlements / payment imports; expense / income /
   prepayments; dimension mutations, create tax, create units (reads already shipped)
 - **Out of scope:** Merit Palk (payroll)

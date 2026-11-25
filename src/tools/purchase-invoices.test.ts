@@ -4,6 +4,7 @@ import type { MeritClient } from "../client.js";
 import {
   createPurchaseInvoiceTools,
   DUPLICATE_WINDOW_DAYS,
+  describeMatch,
   SUBMITTED_FOR_APPROVAL_STATUS,
   shiftMeritDate,
 } from "./purchase-invoices.js";
@@ -226,6 +227,74 @@ describe("merit_submit_purchase_invoice_for_approval", () => {
     );
   });
 
+  it("still returns the not-booked status when Merit sends an empty body", async () => {
+    mockLists([], [], null);
+    const result = await tools.merit_submit_purchase_invoice_for_approval.handler(input);
+    expect(JSON.parse(result.content[0].text)).toEqual({
+      Status: SUBMITTED_FOR_APPROVAL_STATUS,
+    });
+  });
+
+  it("refuses a GetPOrders row that identifies the vendor as ReceiverId", async () => {
+    mockLists(
+      [
+        {
+          PIHId: "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+          BillNo: "TEST-042",
+          VendorId: "00000000-0000-0000-0000-000000000000",
+          VendorName: null,
+          ReceiverId: vendorId,
+          ReceiverName: "Example Vendor OÜ",
+          DocumentDate: "2026-11-25T00:00:00",
+        },
+      ],
+      [],
+    );
+    await expect(tools.merit_submit_purchase_invoice_for_approval.handler(input)).rejects.toThrow(
+      /ReceiverId|Example Vendor OÜ|unconfirmed purchase invoice/,
+    );
+    await expect(tools.merit_submit_purchase_invoice_for_approval.handler(input)).rejects.toThrow(
+      /vendor Example Vendor OÜ/,
+    );
+    expect(sentToSendPurchOrder()).toHaveLength(0);
+  });
+
+  it("matches a GetPOrders vendor by ReceiverName and ignores a nil VendorId", async () => {
+    mockLists(
+      [
+        {
+          PIHId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+          BillNo: "TEST-042",
+          VendorId: "00000000-0000-0000-0000-000000000000",
+          ReceiverName: "example vendor oü",
+        },
+      ],
+      [],
+      { BillId: billId },
+    );
+    await expect(
+      tools.merit_submit_purchase_invoice_for_approval.handler({
+        ...input,
+        vendor: { name: "Example Vendor OÜ", vatAccountable: true, countryCode: "EE" },
+      }),
+    ).rejects.toThrow(/vendor example vendor oü/);
+
+    mockLists(
+      [
+        {
+          PIHId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+          BillNo: "TEST-042",
+          VendorId: "00000000-0000-0000-0000-000000000000",
+          ReceiverId: "99999999-2222-4333-8444-555555555555",
+        },
+      ],
+      [],
+      { BillId: billId },
+    );
+    await tools.merit_submit_purchase_invoice_for_approval.handler(input);
+    expect(sentToSendPurchOrder()).toHaveLength(1);
+  });
+
   it("refuses a second submit for the same vendor id and billNo waiting approval", async () => {
     mockLists(
       [
@@ -240,7 +309,7 @@ describe("merit_submit_purchase_invoice_for_approval", () => {
       [],
     );
     await expect(tools.merit_submit_purchase_invoice_for_approval.handler(input)).rejects.toThrow(
-      /Not submitted: vendor bill TEST-042 already exists in Merit as an unconfirmed purchase invoice waiting for approval \(Kinnitamata ostuarved\) \(PIHId bbbbbbbb-cccc-4ddd-8eee-ffffffffffff, BillNo {2}test-042 , vendor Example Vendor OÜ, document date 2026-08-30\)/,
+      /Not submitted: vendor bill TEST-042 already exists in Merit as an unconfirmed purchase invoice waiting for approval \(Kinnitamata ostuarved\) \(PIHId bbbbbbbb-cccc-4ddd-8eee-ffffffffffff, BillNo test-042, vendor Example Vendor OÜ, document date 2026-08-30\)/,
     );
     expect(sentToSendPurchOrder()).toHaveLength(0);
   });
@@ -342,5 +411,31 @@ describe("merit_submit_purchase_invoice_for_approval", () => {
   it("shifts Merit dates across month and year ends", () => {
     expect(shiftMeritDate("20260131", 30)).toBe("20260302");
     expect(shiftMeritDate("20260115", -30)).toBe("20251216");
+  });
+
+  it("trims a spaced bill number and names the vendor from the list fields", () => {
+    expect(describeMatch("a booked purchase invoice", { BillNo: " test-042 ", PIHId: "p1" })).toBe(
+      "a booked purchase invoice (PIHId p1, BillNo test-042, vendor unknown vendor)",
+    );
+    expect(
+      describeMatch("an unconfirmed purchase invoice", {
+        PIHId: "p2",
+        VendorId: "00000000-0000-0000-0000-000000000000",
+        ReceiverName: " Example Vendor OÜ ",
+      }),
+    ).toBe("an unconfirmed purchase invoice (PIHId p2, BillNo , vendor Example Vendor OÜ)");
+    expect(
+      describeMatch("a booked purchase invoice", {
+        PIHId: "p3",
+        VendorName: "  ",
+        ExpVendorName: "Expense Vendor OÜ",
+      }),
+    ).toContain("vendor Expense Vendor OÜ");
+    expect(
+      describeMatch("a booked purchase invoice", {
+        PIHId: "p4",
+        VendorId: "11111111-2222-4333-8444-555555555555",
+      }),
+    ).toContain("vendor 11111111-2222-4333-8444-555555555555");
   });
 });

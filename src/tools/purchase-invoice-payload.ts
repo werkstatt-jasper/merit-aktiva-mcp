@@ -78,7 +78,7 @@ export const pdfAttachmentSchema = z
 /** Fields accepted by both `sendpurchinvoice` and `sendpurchorder` (v2). */
 export const purchaseInvoiceBaseSchema = z.object({
   vendor: partySchema,
-  billNo: z.string().min(1).max(35),
+  billNo: z.string().trim().min(1).max(35),
   docDate: requiredMeritDate,
   dueDate: optionalMeritDate,
   refNo: optionalString,

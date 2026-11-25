@@ -121,6 +121,14 @@ describe("purchase-invoice payload", () => {
     );
   });
 
+  it("trims billNo and rejects a blank bill number", () => {
+    const args = parseToolArgs(purchaseInvoiceBaseSchema, { ...minimal, billNo: " TEST-001 " });
+    expect(args.billNo).toBe("TEST-001");
+    expect(() => parseToolArgs(purchaseInvoiceBaseSchema, { ...minimal, billNo: "   " })).toThrow(
+      /billNo/,
+    );
+  });
+
   it("does not accept transactionDate on the approval schema", () => {
     const args = parseToolArgs(purchaseInvoiceBaseSchema, {
       ...minimal,

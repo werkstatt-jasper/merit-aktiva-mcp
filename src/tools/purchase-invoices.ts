@@ -57,29 +57,55 @@ function normalize(value: unknown): string {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ").toLowerCase() : "";
 }
 
+/** Merit uses this GUID when GetPOrders has no VendorId. It is not a vendor. */
+const NIL_GUID = "00000000-0000-0000-0000-000000000000";
+
+function normalizeGuid(value: unknown): string {
+  const id = normalize(value);
+  return id === NIL_GUID ? "" : id;
+}
+
 /**
- * Same vendor if the vendor GUID matches, or the vendor name matches (case-insensitive).
- * A vendor given with neither id nor name matches on billNo alone.
+ * Same vendor if a vendor GUID matches, or the vendor name matches (case-insensitive).
+ * GetPOrders leaves VendorId empty and puts the vendor in ReceiverId / ReceiverName.
+ * A nil GUID matches nothing. A vendor given with neither id nor name matches on billNo alone.
  */
 function isSameVendor(vendor: PurchaseInvoiceBaseArgs["vendor"], row: Record<string, unknown>) {
-  if (!vendor.id && !vendor.name) return true;
-  if (vendor.id && normalize(row.VendorId) === normalize(vendor.id)) return true;
-  const name = normalize(vendor.name);
+  const vendorId = normalizeGuid(vendor.id);
+  const vendorName = normalize(vendor.name);
+  if (!vendorId && !vendorName) return true;
+  const rowIds = [row.VendorId, row.ReceiverId].map(normalizeGuid).filter(Boolean);
+  if (vendorId && rowIds.includes(vendorId)) return true;
   return (
-    name !== "" && (normalize(row.VendorName) === name || normalize(row.ExpVendorName) === name)
+    vendorName !== "" &&
+    [row.VendorName, row.ExpVendorName, row.ReceiverName].some(
+      (value) => normalize(value) === vendorName,
+    )
   );
 }
 
-function describeMatch(kind: string, row: Record<string, unknown>): string {
-  const vendor = row.VendorName ?? row.ExpVendorName ?? row.VendorId ?? "unknown vendor";
+function displayVendor(row: Record<string, unknown>): string {
+  for (const value of [row.VendorName, row.ExpVendorName, row.ReceiverName]) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  for (const value of [row.VendorId, row.ReceiverId]) {
+    if (normalizeGuid(value)) return String(value).trim();
+  }
+  return "unknown vendor";
+}
+
+/** Human-readable existing-document line for the duplicate guard. */
+export function describeMatch(kind: string, row: Record<string, unknown>): string {
   const date = row.DocumentDate ? `, document date ${String(row.DocumentDate).slice(0, 10)}` : "";
-  return `${kind} (PIHId ${row.PIHId}, BillNo ${row.BillNo}, vendor ${vendor}${date})`;
+  const billNo = String(row.BillNo ?? "").trim();
+  return `${kind} (PIHId ${row.PIHId}, BillNo ${billNo}, vendor ${displayVendor(row)}${date})`;
 }
 
 /**
  * Duplicate guard for merit_submit_purchase_invoice_for_approval. Looks for the same vendor and
- * billNo among unconfirmed purchase invoices (GetPOrders, by document date) and booked purchase
- * invoices (getpurchorders, by document date) within DUPLICATE_WINDOW_DAYS of docDate.
+ * billNo among unconfirmed purchase invoices (GetPOrders, by document date; vendor is ReceiverId
+ * / ReceiverName because VendorId is empty) and booked purchase invoices (getpurchorders, by
+ * document date) within DUPLICATE_WINDOW_DAYS of docDate.
  * Returns a description of the first match, or undefined. API errors propagate (fail closed).
  */
 export async function findExistingPurchaseDocument(
@@ -284,15 +310,15 @@ export function createPurchaseInvoiceTools(client: MeritClient) {
               "merit_get_purchase_invoice or merit_list_purchase_orders.",
           );
         }
-        const response = await client.post<MeritPurchaseCreateResult>(
+        const response = await client.post<MeritPurchaseCreateResult | null>(
           "/api/v2/sendpurchorder",
           toWirePurchaseInvoice(args),
         );
         return jsonToolResult({
-          BillId: response.BillId,
-          BillNo: response.BillNo,
-          VendorId: response.VendorId,
-          RefNo: response.RefNo,
+          BillId: response?.BillId,
+          BillNo: response?.BillNo,
+          VendorId: response?.VendorId,
+          RefNo: response?.RefNo,
           Status: SUBMITTED_FOR_APPROVAL_STATUS,
         });
       },
