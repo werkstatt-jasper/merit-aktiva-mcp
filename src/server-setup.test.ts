@@ -49,6 +49,7 @@ describe("buildAllTools", () => {
       "merit_get_purchase_invoice",
       "merit_list_purchase_orders",
       "merit_create_purchase_invoice",
+      "merit_submit_purchase_invoice_for_approval",
       "merit_delete_purchase_invoice",
       "merit_list_gl_batches",
       "merit_get_gl_batch",
